@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist-seed",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/seeds/**/*"],
+  "exclude": ["node_modules"]
+}

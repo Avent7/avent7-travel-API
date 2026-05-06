@@ -7,8 +7,9 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PassengersService } from './passengers.service';
 import { CreatePassengerDto } from './dto/create-passenger.dto';
 import { UpdatePassengerDto } from './dto/update-passenger.dto';
@@ -27,10 +28,10 @@ export class PassengersController {
 
   @Get()
   @Auth()
-  @ApiOperation({ summary: 'List all passengers of the agency' })
-  findAll() {
-    const agencyId = this.requestContext.getAgencyId();
-    return this.passengersService.findAll(agencyId!);
+  @ApiQuery({ name: 'clientId', required: true })
+  @ApiOperation({ summary: 'List passengers of a client' })
+  findByClientId(@Query('clientId') clientId: string) {
+    return this.passengersService.findByClientId(clientId);
   }
 
   @Get(':id')
@@ -43,7 +44,7 @@ export class PassengersController {
   @Post()
   @Auth()
   @LogOperation('create_passenger')
-  @ApiOperation({ summary: 'Create a new passenger' })
+  @ApiOperation({ summary: 'Create a passenger linked to a client' })
   create(@Body() dto: CreatePassengerDto) {
     const agencyId = this.requestContext.getAgencyId();
     return this.passengersService.create(dto, agencyId!);

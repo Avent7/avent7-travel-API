@@ -14,6 +14,7 @@ import { LogModule } from './logs/log.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { AgenciesModule } from './agencies/agencies.module';
+import { ClientsModule } from './clients/clients.module';
 import { PassengersModule } from './passengers/passengers.module';
 import { PropostasModule } from './propostas/propostas.module';
 import { PropostaBlocksModule } from './proposta-blocks/proposta-blocks.module';
@@ -78,6 +79,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'developer';
     AuthModule,
     UsersModule,
     AgenciesModule,
+    ClientsModule,
     PassengersModule,
     PropostasModule,
     PropostaBlocksModule,

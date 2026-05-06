@@ -18,7 +18,11 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!user || !requiredRoles.includes(user.role)) {
+    if (!user) throw new ForbiddenException('Acesso negado: permissão insuficiente.');
+
+    if (user.role === UserRole.SUPERADMIN) return true;
+
+    if (!requiredRoles.includes(user.role)) {
       throw new ForbiddenException('Acesso negado: permissão insuficiente.');
     }
 

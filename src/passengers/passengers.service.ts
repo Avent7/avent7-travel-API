@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
@@ -15,13 +14,8 @@ export class PassengersService {
     @Inject(PASSENGER_REPOSITORY) private readonly repo: IPassengerRepository,
   ) {}
 
-  private generateClientCode(): string {
-    const ts = Date.now().toString(36).toUpperCase();
-    return `AP-${ts}`;
-  }
-
-  async findAll(agencyId: string): Promise<IPassenger[]> {
-    return this.repo.findAll(agencyId);
+  async findByClientId(clientId: string): Promise<IPassenger[]> {
+    return this.repo.findByClientId(clientId);
   }
 
   async findById(id: string): Promise<IPassenger> {
@@ -31,8 +25,7 @@ export class PassengersService {
   }
 
   async create(dto: CreatePassengerDto, agencyId: string): Promise<IPassenger> {
-    const clientCode = this.generateClientCode();
-    return this.repo.create({ ...dto, agencyId, clientCode });
+    return this.repo.create({ ...dto, agencyId });
   }
 
   async update(id: string, dto: UpdatePassengerDto): Promise<IPassenger> {

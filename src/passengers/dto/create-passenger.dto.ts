@@ -1,20 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { ClientSegment, Gender } from '../enums/passenger.enum';
+import { IsEnum, IsObject, IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import { Gender } from '../enums/passenger.enum';
 
 export class CreatePassengerDto {
   @ApiProperty()
   @IsString()
-  fullName: string;
+  @IsNotEmpty()
+  clientId: string;
 
   @ApiProperty()
-  @IsEmail()
-  emailPrimary: string;
-
-  @ApiPropertyOptional({ enum: ClientSegment })
-  @IsOptional()
-  @IsEnum(ClientSegment)
-  segment?: ClientSegment;
+  @IsString()
+  fullName: string;
 
   @ApiPropertyOptional({ enum: Gender })
   @IsOptional()
@@ -38,46 +34,21 @@ export class CreatePassengerDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  profession?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  company?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  emailSecondary?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  phonePrimary?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  phoneAlternative?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
   @IsObject()
-  address?: Record<string, string>;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsObject()
-  emergencyContact?: Record<string, string>;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsObject()
-  documents?: Record<string, string>;
+  documents?: {
+    passportNumber?: string;
+    passportExpiry?: string;
+    passportCountry?: string;
+    visaInfo?: string;
+  };
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsObject()
   travelPreferences?: Record<string, any>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  emergencyContact?: Record<string, string>;
 }

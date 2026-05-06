@@ -6,7 +6,7 @@ import { IPassengerRepository } from '../interfaces/passenger.repository.interfa
 import { IPassenger } from '../interfaces/passenger.interface';
 import { CreatePassengerDto } from '../dto/create-passenger.dto';
 import { UpdatePassengerDto } from '../dto/update-passenger.dto';
-import { ClientSegment, Gender } from '../enums/passenger.enum';
+import { Gender } from '../enums/passenger.enum';
 
 type MongoPax = Passenger & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date };
 
@@ -19,25 +19,16 @@ export class PassengerMongooseRepository implements IPassengerRepository {
   private toIPax(doc: MongoPax): IPassenger {
     return {
       id: doc._id.toString(),
+      clientId: doc.clientId?.toString() ?? '',
       agencyId: doc.agencyId?.toString() ?? '',
-      clientCode: doc.clientCode,
       fullName: doc.fullName,
       socialName: doc.socialName ?? null,
       dateOfBirth: doc.dateOfBirth ?? null,
       gender: (doc.gender as Gender) ?? null,
       nationality: doc.nationality ?? null,
-      profession: doc.profession ?? null,
-      company: doc.company ?? null,
-      segment: doc.segment as ClientSegment,
-      photoUrl: doc.photoUrl ?? null,
-      emailPrimary: doc.emailPrimary,
-      emailSecondary: doc.emailSecondary ?? null,
-      phonePrimary: doc.phonePrimary ?? null,
-      phoneAlternative: doc.phoneAlternative ?? null,
-      address: doc.address ?? {},
-      emergencyContact: doc.emergencyContact ?? {},
       documents: doc.documents ?? {},
       travelPreferences: doc.travelPreferences ?? {},
+      emergencyContact: doc.emergencyContact ?? {},
       isActive: doc.isActive,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
@@ -51,19 +42,22 @@ export class PassengerMongooseRepository implements IPassengerRepository {
     return docs.map((d) => this.toIPax(d));
   }
 
+  async findByClientId(clientId: string): Promise<IPassenger[]> {
+    const docs = await this.model
+      .find({ clientId: new Types.ObjectId(clientId) })
+      .lean<MongoPax[]>();
+    return docs.map((d) => this.toIPax(d));
+  }
+
   async findById(id: string): Promise<IPassenger | null> {
     const doc = await this.model.findById(id).lean<MongoPax>();
     return doc ? this.toIPax(doc) : null;
   }
 
-  async findByClientCode(clientCode: string): Promise<IPassenger | null> {
-    const doc = await this.model.findOne({ clientCode }).lean<MongoPax>();
-    return doc ? this.toIPax(doc) : null;
-  }
-
-  async create(dto: CreatePassengerDto & { agencyId: string; clientCode: string }): Promise<IPassenger> {
+  async create(dto: CreatePassengerDto & { agencyId: string }): Promise<IPassenger> {
     const created = await this.model.create({
       ...dto,
+      clientId: new Types.ObjectId(dto.clientId),
       agencyId: new Types.ObjectId(dto.agencyId),
     });
     const doc = await this.model.findById(created._id).lean<MongoPax>();

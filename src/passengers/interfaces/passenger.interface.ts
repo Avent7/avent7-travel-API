@@ -1,26 +1,22 @@
-import { ClientSegment, Gender } from '../enums/passenger.enum';
+import { Gender } from '../enums/passenger.enum';
 
 export interface IPassenger {
   id: string;
+  clientId: string;
   agencyId: string;
-  clientCode: string;
   fullName: string;
   socialName: string | null;
   dateOfBirth: Date | null;
   gender: Gender | null;
   nationality: string | null;
-  profession: string | null;
-  company: string | null;
-  segment: ClientSegment;
-  photoUrl: string | null;
-  emailPrimary: string;
-  emailSecondary: string | null;
-  phonePrimary: string | null;
-  phoneAlternative: string | null;
-  address: Record<string, string | undefined>;
-  emergencyContact: Record<string, string | undefined>;
-  documents: Record<string, string | undefined>;
+  documents: {
+    passportNumber?: string;
+    passportExpiry?: Date;
+    passportCountry?: string;
+    visaInfo?: string;
+  };
   travelPreferences: Record<string, any>;
+  emergencyContact: Record<string, string | undefined>;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

@@ -7,6 +7,7 @@
     "start": "node dist/main",
     "start:dev": "NODE_ENV=developer nest start --watch",
     "start:dev:win": "cross-env NODE_ENV=developer nest start --watch",
+    "dev": "nest start --watch",
     "start:prod": "NODE_ENV=production node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "seed:admin": "ts-node -P tsconfig.seed.json src/seeds/seed-admin.ts"

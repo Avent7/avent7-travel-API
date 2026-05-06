@@ -6,9 +6,9 @@ export const PASSENGER_REPOSITORY = Symbol('IPassengerRepository');
 
 export interface IPassengerRepository {
   findAll(agencyId: string): Promise<IPassenger[]>;
+  findByClientId(clientId: string): Promise<IPassenger[]>;
   findById(id: string): Promise<IPassenger | null>;
-  findByClientCode(clientCode: string): Promise<IPassenger | null>;
-  create(dto: CreatePassengerDto & { agencyId: string; clientCode: string }): Promise<IPassenger>;
+  create(dto: CreatePassengerDto & { agencyId: string }): Promise<IPassenger>;
   update(id: string, dto: UpdatePassengerDto): Promise<IPassenger | null>;
   remove(id: string): Promise<boolean>;
 }
