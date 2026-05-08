@@ -10,7 +10,8 @@
     "dev": "nest start --watch",
     "start:prod": "NODE_ENV=production node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
-    "seed:admin": "ts-node -P tsconfig.seed.json src/seeds/seed-admin.ts"
+    "seed:admin": "ts-node -P tsconfig.seed.json src/seeds/seed-admin.ts",
+    "seed:briefing-template": "ts-node -P tsconfig.seed.json src/seeds/seed-briefing-template.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

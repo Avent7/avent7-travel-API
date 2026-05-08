@@ -50,6 +50,7 @@ export class PassengerMongooseRepository implements IPassengerRepository {
   }
 
   async findById(id: string): Promise<IPassenger | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.model.findById(id).lean<MongoPax>();
     return doc ? this.toIPax(doc) : null;
   }

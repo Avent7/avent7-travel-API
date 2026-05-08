@@ -1,29 +1,55 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsMongoId, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { TripStyle, TripType } from '../enums/briefing.enum';
 
 export class CreateBriefingDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do template de briefing' })
   @IsMongoId()
-  viagemId: string;
+  templateId: string;
+
+  @ApiPropertyOptional({ description: 'ID da viagem (opcional)' })
+  @IsOptional()
+  @IsMongoId()
+  viagemId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsMongoId()
   passengerId?: string;
 
-  @ApiProperty({ enum: TripType })
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  expiresAt?: string;
+
+  // Legacy optional fields
+  @ApiPropertyOptional({ enum: TripType })
+  @IsOptional()
   @IsEnum(TripType)
-  tripType: TripType;
+  tripType?: TripType;
 
-  @ApiProperty({ enum: TripStyle })
+  @ApiPropertyOptional({ enum: TripStyle })
+  @IsOptional()
   @IsEnum(TripStyle)
-  tripStyle: TripStyle;
+  tripStyle?: TripStyle;
 
-  @ApiProperty({ type: [String] })
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  destinations: string[];
+  destinations?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -40,9 +66,10 @@ export class CreateBriefingDto {
   @IsNumber()
   totalNights?: number;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsNumber()
-  adultCount: number;
+  adultCount?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

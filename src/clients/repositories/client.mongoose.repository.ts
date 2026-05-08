@@ -58,6 +58,7 @@ export class ClientMongooseRepository implements IClientRepository {
   }
 
   async findById(id: string): Promise<IClient | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.model.findById(id).lean<MongoClient>();
     return doc ? this.toIClient(doc) : null;
   }

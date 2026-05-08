@@ -89,6 +89,7 @@ export class ViagemMongooseRepository implements IViagemRepository {
   }
 
   async findById(id: string): Promise<IViagem | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.model.findById(id).lean<MongoViagem>();
     return doc ? this.toI(doc) : null;
   }

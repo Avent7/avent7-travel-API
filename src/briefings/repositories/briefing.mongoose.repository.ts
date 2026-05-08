@@ -6,7 +6,7 @@ import { IBriefingRepository } from '../interfaces/briefing.repository.interface
 import { IBriefing } from '../interfaces/briefing.interface';
 import { CreateBriefingDto } from '../dto/create-briefing.dto';
 import { UpdateBriefingDto } from '../dto/update-briefing.dto';
-import { BriefingStatus, TripStyle, TripType } from '../enums/briefing.enum';
+import { BriefingDocumentStatus, BriefingStatus, TripStyle, TripType } from '../enums/briefing.enum';
 
 type MongoBrf = Briefing & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date };
 
@@ -20,16 +20,23 @@ export class BriefingMongooseRepository implements IBriefingRepository {
     return {
       id: doc._id.toString(),
       agencyId: doc.agencyId?.toString() ?? '',
-      viagemId: doc.viagemId?.toString() ?? '',
+      viagemId: doc.viagemId?.toString() ?? null,
+      templateId: doc.templateId?.toString() ?? null,
+      publicUrl: doc.publicUrl ?? null,
+      answers: doc.answers ?? null,
+      clientInfo: doc.clientInfo ?? null,
+      briefingDocumentStatus: (doc.briefingDocumentStatus as BriefingDocumentStatus) ?? BriefingDocumentStatus.PENDING,
+      note: doc.note ?? null,
+      expiresAt: doc.expiresAt ?? null,
       passengerId: doc.passengerId?.toString() ?? null,
       status: doc.status as BriefingStatus,
-      tripType: doc.tripType as TripType,
-      tripStyle: doc.tripStyle as TripStyle,
+      tripType: (doc.tripType as TripType) ?? null,
+      tripStyle: (doc.tripStyle as TripStyle) ?? null,
       destinations: doc.destinations ?? [],
       startDate: doc.startDate ?? null,
       endDate: doc.endDate ?? null,
       totalNights: doc.totalNights ?? null,
-      adultCount: doc.adultCount,
+      adultCount: doc.adultCount ?? 1,
       childCount: doc.childCount ?? 0,
       budgetUsd: doc.budgetUsd ?? null,
       notes: doc.notes ?? null,
@@ -58,6 +65,7 @@ export class BriefingMongooseRepository implements IBriefingRepository {
   }
 
   async findById(id: string): Promise<IBriefing | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.model.findById(id).lean<MongoBrf>();
     return doc ? this.toI(doc) : null;
   }
@@ -66,7 +74,8 @@ export class BriefingMongooseRepository implements IBriefingRepository {
     const created = await this.model.create({
       ...dto,
       agencyId: new Types.ObjectId(dto.agencyId),
-      viagemId: new Types.ObjectId(dto.viagemId),
+      viagemId: dto.viagemId ? new Types.ObjectId(dto.viagemId) : null,
+      templateId: dto.templateId ? new Types.ObjectId(dto.templateId) : null,
       passengerId: dto.passengerId ? new Types.ObjectId(dto.passengerId) : null,
     });
     const doc = await this.model.findById(created._id).lean<MongoBrf>();

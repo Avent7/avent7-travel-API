@@ -36,6 +36,7 @@ export class AgencyMongooseRepository implements IAgencyRepository {
   }
 
   async findById(id: string): Promise<IAgency | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.agencyModel.findById(id).lean<MongoAgency>();
     return doc ? this.toIAgency(doc) : null;
   }

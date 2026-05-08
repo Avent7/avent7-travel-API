@@ -21,6 +21,7 @@ import { PropostasModule } from './propostas/propostas.module';
 import { PropostaBlocksModule } from './proposta-blocks/proposta-blocks.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { BriefingsModule } from './briefings/briefings.module';
+import { BriefingTemplatesModule } from './briefing-templates/briefing-templates.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 const NODE_ENV = process.env.NODE_ENV ?? 'developer';
@@ -87,6 +88,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'developer';
     PropostaBlocksModule,
     BookingsModule,
     BriefingsModule,
+    BriefingTemplatesModule,
   ],
 
   providers: [

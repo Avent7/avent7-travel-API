@@ -7,6 +7,11 @@ export enum BriefingStatus {
   ARCHIVED = 'archived',
 }
 
+export enum BriefingDocumentStatus {
+  PENDING = 'pending',
+  SUBMITTED = 'submitted',
+}
+
 export enum TripStyle {
   LUXURY_WELLNESS = 'luxury_wellness',
   ADVENTURE_NATURE = 'adventure_nature',

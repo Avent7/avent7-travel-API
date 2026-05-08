@@ -58,6 +58,7 @@ export class BookingMongooseRepository implements IBookingRepository {
   }
 
   async findById(id: string): Promise<IBooking | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.model.findById(id).lean<MongoBkg>();
     return doc ? this.toI(doc) : null;
   }

@@ -62,6 +62,7 @@ export class PropostaMongooseRepository implements IPropostaRepository {
   }
 
   async findById(id: string): Promise<IProposta | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.model.findById(id).lean<MongoProposta>();
     return doc ? this.toI(doc) : null;
   }

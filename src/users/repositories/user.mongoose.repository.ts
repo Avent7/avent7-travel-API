@@ -39,6 +39,7 @@ export class UserMongooseRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<IUser | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
     const doc = await this.userModel.findById(id).lean<MongoUser>();
     return doc ? this.toIUser(doc) : null;
   }
