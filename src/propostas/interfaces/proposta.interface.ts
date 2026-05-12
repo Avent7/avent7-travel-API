@@ -1,4 +1,5 @@
 import { PropostaStatus } from '../enums/proposta.enum';
+import { IPropostaBlock } from '../../proposta-blocks/interfaces/proposta-block.interface';
 
 export interface IProposta {
   id: string;
@@ -20,6 +21,7 @@ export interface IProposta {
   sentToClientAt: Date | null;
   approvedAt: Date | null;
   bookedAt: Date | null;
+  blocks: IPropostaBlock[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,18 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { PropostaBlock, PropostaBlockSchema } from './schemas/proposta-block.schema';
 import { PropostaBlocksService } from './proposta-blocks.service';
 import { PropostaBlocksController } from './proposta-blocks.controller';
-import { PropostaBlockMongooseRepository } from './repositories/proposta-block.mongoose.repository';
-import { PROPOSTA_BLOCK_REPOSITORY } from './interfaces/proposta-block.repository.interface';
+import { PropostasModule } from '../propostas/propostas.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: PropostaBlock.name, schema: PropostaBlockSchema }])],
+  imports: [PropostasModule],
   controllers: [PropostaBlocksController],
-  providers: [
-    PropostaBlocksService,
-    { provide: PROPOSTA_BLOCK_REPOSITORY, useClass: PropostaBlockMongooseRepository },
-  ],
+  providers: [PropostaBlocksService],
   exports: [PropostaBlocksService],
 })
 export class PropostaBlocksModule {}

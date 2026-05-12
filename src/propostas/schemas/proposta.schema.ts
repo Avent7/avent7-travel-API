@@ -2,8 +2,21 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import * as mongoose from 'mongoose';
 import { PropostaStatus } from '../enums/proposta.enum';
+import { BlockType } from '../../proposta-blocks/enums/block.enum';
 
 export type PropostaDocument = HydratedDocument<Proposta>;
+
+const BlockSubSchema = new mongoose.Schema(
+  {
+    blockType: { type: String, enum: Object.values(BlockType), required: true },
+    dayNumber: { type: Number, required: true, default: 1 },
+    sortOrder: { type: Number, default: 0 },
+    saleUsd: { type: Number, default: null },
+    blockData: { type: mongoose.Schema.Types.Mixed, default: null },
+    isConfirmed: { type: Boolean, default: false },
+  },
+  { timestamps: true, _id: true },
+);
 
 @Schema({ timestamps: true })
 export class Proposta {
@@ -60,6 +73,9 @@ export class Proposta {
 
   @Prop({ default: null })
   bookedAt: Date | null;
+
+  @Prop({ type: [BlockSubSchema], default: [] })
+  blocks: mongoose.Types.DocumentArray<any>;
 }
 
 export const PropostaSchema = SchemaFactory.createForClass(Proposta);

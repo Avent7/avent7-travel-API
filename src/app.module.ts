@@ -54,6 +54,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'developer';
         minPoolSize: 5,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
+        enableUtf8Validation: false,
       }),
     }),
 

@@ -1,41 +1,34 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { PROPOSTA_BLOCK_REPOSITORY, IPropostaBlockRepository } from './interfaces/proposta-block.repository.interface';
+import { Injectable } from '@nestjs/common';
+import { PropostasService } from '../propostas/propostas.service';
 import { IPropostaBlock } from './interfaces/proposta-block.interface';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
 
 @Injectable()
 export class PropostaBlocksService {
-  constructor(
-    @Inject(PROPOSTA_BLOCK_REPOSITORY) private readonly repo: IPropostaBlockRepository,
-  ) {}
+  constructor(private readonly propostasService: PropostasService) {}
 
-  async findByProposta(propostaId: string): Promise<IPropostaBlock[]> {
-    return this.repo.findByProposta(propostaId);
+  findByProposta(propostaId: string): Promise<IPropostaBlock[]> {
+    return this.propostasService.findBlocks(propostaId);
   }
 
-  async findById(id: string): Promise<IPropostaBlock> {
-    const block = await this.repo.findById(id);
-    if (!block) throw new NotFoundException('Bloco não encontrado.');
-    return block;
+  findById(propostaId: string, blockId: string): Promise<IPropostaBlock> {
+    return this.propostasService.findBlockById(propostaId, blockId);
   }
 
-  async create(propostaId: string, dto: CreateBlockDto): Promise<IPropostaBlock> {
-    return this.repo.create({ ...dto, propostaId });
+  create(propostaId: string, dto: CreateBlockDto): Promise<IPropostaBlock> {
+    return this.propostasService.addBlock(propostaId, dto);
   }
 
-  async update(id: string, dto: UpdateBlockDto): Promise<IPropostaBlock> {
-    const updated = await this.repo.update(id, dto);
-    if (!updated) throw new NotFoundException('Bloco não encontrado.');
-    return updated;
+  update(propostaId: string, blockId: string, dto: UpdateBlockDto): Promise<IPropostaBlock> {
+    return this.propostasService.updateBlock(propostaId, blockId, dto);
   }
 
-  async reorder(propostaId: string, orderedIds: string[]): Promise<IPropostaBlock[]> {
-    return this.repo.reorder(propostaId, orderedIds);
+  reorder(propostaId: string, orderedIds: string[]): Promise<IPropostaBlock[]> {
+    return this.propostasService.reorderBlocks(propostaId, orderedIds);
   }
 
-  async remove(id: string): Promise<void> {
-    const deleted = await this.repo.remove(id);
-    if (!deleted) throw new NotFoundException('Bloco não encontrado.');
+  async remove(propostaId: string, blockId: string): Promise<void> {
+    return this.propostasService.removeBlock(propostaId, blockId);
   }
 }

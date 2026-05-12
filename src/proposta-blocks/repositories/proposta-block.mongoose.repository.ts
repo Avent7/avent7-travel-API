@@ -38,11 +38,18 @@ export class PropostaBlockMongooseRepository implements IPropostaBlockRepository
   }
 
   async findByProposta(propostaId: string): Promise<IPropostaBlock[]> {
-    const docs = await this.model
-      .find({ propostaId: new Types.ObjectId(propostaId) })
-      .sort({ sortOrder: 1, dayNumber: 1 })
-      .lean<MongoBlock[]>();
-    return docs.map((d) => this.toI(d));
+    if (!Types.ObjectId.isValid(propostaId)) return [];
+    try {
+      const docs = await this.model
+        .find({ propostaId: new Types.ObjectId(propostaId) })
+        .sort({ sortOrder: 1, dayNumber: 1 })
+        .lean<MongoBlock[]>();
+      return docs.map((d) => this.toI(d));
+    } catch (err) {
+      // Documento com BSON corrompido — retorna vazio para não bloquear a página
+      console.error(`[blocks] BSON error ao ler blocks de ${propostaId}:`, err);
+      return [];
+    }
   }
 
   async findById(id: string): Promise<IPropostaBlock | null> {
@@ -52,6 +59,7 @@ export class PropostaBlockMongooseRepository implements IPropostaBlockRepository
   }
 
   async create(dto: CreateBlockDto & { propostaId: string }): Promise<IPropostaBlock> {
+    if (!Types.ObjectId.isValid(dto.propostaId)) throw new Error(`propostaId inválido: ${dto.propostaId}`);
     const maxOrder = await this.model
       .findOne({ propostaId: new Types.ObjectId(dto.propostaId) })
       .sort({ sortOrder: -1 })

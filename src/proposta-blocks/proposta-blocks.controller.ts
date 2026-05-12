@@ -25,7 +25,7 @@ export class PropostaBlocksController {
 
   @Get()
   @Auth()
-  @ApiOperation({ summary: 'List all blocks of a proposta (sorted by sortOrder)' })
+  @ApiOperation({ summary: 'List all blocks of a proposta' })
   findAll(@Param('propostaId') propostaId: string) {
     return this.service.findByProposta(propostaId);
   }
@@ -33,8 +33,8 @@ export class PropostaBlocksController {
   @Get(':id')
   @Auth()
   @ApiOperation({ summary: 'Get block by id' })
-  findOne(@Param('id') id: string) {
-    return this.service.findById(id);
+  findOne(@Param('propostaId') propostaId: string, @Param('id') id: string) {
+    return this.service.findById(propostaId, id);
   }
 
   @Post()
@@ -49,8 +49,8 @@ export class PropostaBlocksController {
   @Auth()
   @LogOperation('update_block')
   @ApiOperation({ summary: 'Update a block' })
-  update(@Param('id') id: string, @Body() dto: UpdateBlockDto) {
-    return this.service.update(id, dto);
+  update(@Param('propostaId') propostaId: string, @Param('id') id: string, @Body() dto: UpdateBlockDto) {
+    return this.service.update(propostaId, id, dto);
   }
 
   @Put('reorder')
@@ -66,7 +66,7 @@ export class PropostaBlocksController {
   @HttpCode(204)
   @LogOperation('delete_block')
   @ApiOperation({ summary: 'Delete a block' })
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  remove(@Param('propostaId') propostaId: string, @Param('id') id: string) {
+    return this.service.remove(propostaId, id);
   }
 }
