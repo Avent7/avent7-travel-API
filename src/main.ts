@@ -13,6 +13,7 @@ async function bootstrap() {
       'http://localhost:3055',
       'http://localhost:3056',
       'http://localhost:3000',
+      'https://v0-avent7-travel.vercel.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],

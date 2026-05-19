@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as sharp from 'sharp';
@@ -11,6 +12,7 @@ import { IUserRepository, USER_REPOSITORY } from './interfaces/user.repository.i
 import { IUser } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { S3Service } from '../storage/s3.service';
 
 @Injectable()
@@ -61,6 +63,25 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     const deleted = await this.userRepo.remove(id);
     if (!deleted) throw new NotFoundException('Usuário não encontrado.');
+  }
+
+  async updatePassword(id: string, hashedPassword: string): Promise<void> {
+    const updated = await this.userRepo.update(id, { password: hashedPassword } as any);
+    if (!updated) throw new NotFoundException('Usuário não encontrado.');
+  }
+
+  async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
+    const profile = await this.userRepo.findById(id);
+    if (!profile) throw new NotFoundException('Usuário não encontrado.');
+
+    const userWithPassword = await this.userRepo.findByEmail(profile.email);
+    if (!userWithPassword?.password) throw new NotFoundException('Usuário não encontrado.');
+
+    const match = await bcrypt.compare(dto.currentPassword, userWithPassword.password);
+    if (!match) throw new UnauthorizedException('Senha atual incorreta.');
+
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.update(id, { password: hashed } as any);
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<Omit<IUser, 'password'>> {

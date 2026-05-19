@@ -13,6 +13,9 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Auth } from '../common/decorators/auth.decorator';
 import { LogOperation } from '../common/decorators/log-operation.decorator';
 
@@ -56,5 +59,28 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout and invalidate session' })
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     return this.authService.logout((req.user as any).userId, res);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  @LogOperation('forgot-password')
+  @ApiOperation({ summary: 'Request password reset code' })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post('verify-reset-code')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Verify password reset code' })
+  verifyResetCode(@Body() dto: VerifyResetCodeDto) {
+    return this.authService.verifyResetCode(dto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @LogOperation('reset-password')
+  @ApiOperation({ summary: 'Reset password using verified code' })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 }

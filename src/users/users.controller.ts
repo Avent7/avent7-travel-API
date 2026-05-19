@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nes
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { Auth } from '../common/decorators/auth.decorator';
 import { UserRole } from './enums/user-role.enum';
 import { RequestContextService } from '../common/cls/request-context.service';
@@ -36,6 +37,16 @@ export class UsersController {
   getMe() {
     const userId = this.requestContext.getUserId();
     return this.usersService.findById(userId!);
+  }
+
+  @Post('me/password')
+  @Auth()
+  @HttpCode(204)
+  @LogOperation('change_password')
+  @ApiOperation({ summary: 'Change own password' })
+  changePassword(@Body() dto: ChangePasswordDto) {
+    const userId = this.requestContext.getUserId();
+    return this.usersService.changePassword(userId!, dto);
   }
 
   @Post('me/avatar')
