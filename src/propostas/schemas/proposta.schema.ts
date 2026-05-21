@@ -65,6 +65,9 @@ export class Proposta {
   @Prop({ default: null })
   heroImageUrl: string | null;
 
+  @Prop({ type: [String], default: [] })
+  destinations: string[];
+
   @Prop({ default: null })
   clientMessage: string | null;
 

@@ -40,7 +40,28 @@ export class PropostasService {
   }
 
   async update(id: string, dto: UpdatePropostaDto): Promise<IProposta> {
-    const updated = await this.repo.update(id, dto);
+    const current = await this.repo.findById(id);
+    if (!current) throw new NotFoundException('Proposta não encontrada.');
+
+    // Recalcula totalNights quando startDate ou endDate mudam — mantém
+    // a contagem de noites/dias do roteiro sincronizada com o período da viagem.
+    const finalDto: UpdatePropostaDto = { ...dto };
+    if (dto.startDate !== undefined || dto.endDate !== undefined) {
+      const startSrc = dto.startDate ?? current.startDate;
+      const endSrc = dto.endDate ?? current.endDate;
+      if (startSrc && endSrc) {
+        const startMs = new Date(startSrc).getTime();
+        const endMs = new Date(endSrc).getTime();
+        if (!isNaN(startMs) && !isNaN(endMs)) {
+          finalDto.totalNights = Math.max(
+            0,
+            Math.round((endMs - startMs) / 86_400_000),
+          );
+        }
+      }
+    }
+
+    const updated = await this.repo.update(id, finalDto);
     if (!updated) throw new NotFoundException('Proposta não encontrada.');
     return updated;
   }

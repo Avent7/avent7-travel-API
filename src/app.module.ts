@@ -27,6 +27,7 @@ import { BriefingsModule } from './briefings/briefings.module';
 import { BriefingTemplatesModule } from './briefing-templates/briefing-templates.module';
 import { ImagesModule } from './images/images.module';
 import { AiModule } from './ai/ai.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 @Module({
@@ -98,6 +99,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     BriefingTemplatesModule,
     ImagesModule,
     AiModule,
+    DashboardModule,
   ],
 
   providers: [

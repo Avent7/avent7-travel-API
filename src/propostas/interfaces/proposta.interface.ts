@@ -18,6 +18,7 @@ export interface IProposta {
   platformFeeUsd: number;
   agencyProfitUsd: number;
   heroImageUrl: string | null;
+  destinations: string[];
   clientMessage: string | null;
   sentToClientAt: Date | null;
   approvedAt: Date | null;

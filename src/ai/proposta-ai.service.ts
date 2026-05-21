@@ -27,12 +27,56 @@ export interface AiBlockSuggestion {
   blockData: AiBlockData;
 }
 
+// ─── URL stripping (defesa em profundidade — prompts já instruem a não incluir) ──
+
+const URL_PATTERNS: RegExp[] = [
+  /\bhttps?:\/\/\S+/gi,
+  /\bwww\.[a-z0-9.-]+\.[a-z]{2,}(?:\/\S*)?/gi,
+  /\b[a-z0-9-]+(?:\.[a-z0-9-]+)+\.(?:com|com\.br|net|org|io|co|app|gov|edu)(?:\/\S*)?\b/gi,
+];
+
+function sanitizeText(input: string): string {
+  let out = input;
+  for (const re of URL_PATTERNS) out = out.replace(re, '');
+  out = out
+    .replace(/\(\s*\)/g, '')              // parênteses vazios
+    .replace(/\[\s*\]/g, '')              // colchetes vazios (rasto de markdown link)
+    .replace(/[ \t]+([.,;:!?])/g, '$1')   // espaço antes de pontuação
+    .replace(/[ \t]{2,}/g, ' ')           // múltiplos espaços
+    .replace(/\n{3,}/g, '\n\n')           // limita quebras
+    .trim();
+  return out;
+}
+
+function sanitizeAiOutput<T>(value: T): T {
+  if (value == null) return value;
+  if (typeof value === 'string') return sanitizeText(value) as unknown as T;
+  if (Array.isArray(value)) return value.map(v => sanitizeAiOutput(v)) as unknown as T;
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = sanitizeAiOutput(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 // ─── Prompts base ──────────────────────────────────────────────────────────────
 
 const SYSTEM_BASE = `Você é um consultor sênior de uma agência de viagens premium brasileira.
-Retorne APENAS JSON válido, sem blocos de markdown, sem texto fora do JSON.
+Retorne APENAS JSON válido, sem blocos de markdown ao redor do JSON, sem texto fora do JSON.
 Todos os textos em Português do Brasil.
-Omita campos que não puder preencher com informação real ou confiável.`;
+Omita campos que não puder preencher com informação real ou confiável.
+
+REGRAS DE CONTEÚDO (obrigatórias):
+- NÃO inclua URLs, links, domínios (ex: "site.com", "www.…"), nem frases do tipo "veja em…", "acesse o site", "mais informações em…". Use apenas texto descritivo.
+- Em campos de texto longo (bodyMd, cancelPolicy, includes), use markdown leve:
+  • parágrafos separados por uma linha em branco;
+  • **negrito** para destaques pontuais (1–3 por parágrafo);
+  • listas com "- " quando houver itens enumeráveis (inclusões, dicas, o que levar);
+  • sem títulos (#), sem tabelas, sem código.
+- Frases curtas e diretas. Sem repetir o título do bloco no início do bodyMd.`;
 
 const BLOCK_TYPES_WITH_WEB_SEARCH = new Set(['hospedagem', 'restaurante', 'experiencia']);
 
@@ -156,13 +200,14 @@ export class PropostaAiService {
 
   async gerarMensagemBreve(dto: MensagemBreveDto): Promise<{ text: string }> {
     const { reply } = await this.aiService.generate(this.buildMensagemBrevePrompt(dto));
-    return { text: reply.trim() };
+    return { text: sanitizeText(reply) };
   }
 
   private buildMensagemBrevePrompt(dto: MensagemBreveDto): string {
     const lines: string[] = [
       'Escreva uma "Mensagem breve" personalizada para uma proposta de viagem premium.',
       'Tom: acolhedor, profissional e entusiasmado. Extensão: 2 a 4 frases. Responda APENAS com o texto, sem aspas, sem prefixo.',
+      'NÃO inclua URLs, links nem domínios (ex: site.com). Apenas texto.',
       '',
     ];
     if (dto.propostaTitle) lines.push(`Destino / proposta: ${dto.propostaTitle}`);
@@ -180,7 +225,7 @@ export class PropostaAiService {
       ? await this.aiService.generateWithWebSearch(fullPrompt)
       : await this.aiService.generate(fullPrompt);
     const blockData = this.parseJson<AiBlockData>(reply, {});
-    return { blockData };
+    return { blockData: sanitizeAiOutput(blockData) };
   }
 
   async sugerirAtividadesDia(dto: SugerirAtividadesDiaDto): Promise<{ suggestions: AiBlockSuggestion[] }> {
@@ -188,7 +233,7 @@ export class PropostaAiService {
 
     const { reply } = await this.aiService.generateWithWebSearch(fullPrompt);
     const parsed = this.parseJson<{ suggestions: AiBlockSuggestion[] }>(reply, { suggestions: [] });
-    return { suggestions: parsed.suggestions ?? [] };
+    return { suggestions: sanitizeAiOutput(parsed.suggestions ?? []) };
   }
 
   private buildContextLines(dto: SugerirBlocoDto | SugerirAtividadesDiaDto, dateLabel: string): string[] {

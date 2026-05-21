@@ -83,6 +83,7 @@ export class PropostaMongooseRepository implements IPropostaRepository {
       platformFeeUsd: doc.platformFeeUsd ?? 0,
       agencyProfitUsd: doc.agencyProfitUsd ?? 0,
       heroImageUrl: doc.heroImageUrl ?? null,
+      destinations: doc.destinations ?? [],
       clientMessage: doc.clientMessage ?? null,
       sentToClientAt: doc.sentToClientAt ?? null,
       approvedAt: doc.approvedAt ?? null,

@@ -56,9 +56,10 @@ export class AiService implements OnModuleInit {
   }
 
   async generateStream(prompt: string, res: Response): Promise<void> {
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
 
     try {
@@ -71,19 +72,19 @@ export class AiService implements OnModuleInit {
 
       for await (const event of stream) {
         if (event.type === 'response.output_text.delta') {
-          res.write(`data: ${JSON.stringify({ delta: event.delta })}\n\n`);
+          res.write(`data: ${JSON.stringify({ delta: event.delta })}\n\n`, 'utf8');
         }
       }
 
-      res.write(`data: [DONE]\n\n`);
+      res.write(`data: [DONE]\n\n`, 'utf8');
     } catch (error) {
       if (error instanceof APIError) {
         this.logger.error(`Erro de streaming OpenAI [${error.status}]: ${error.message}`);
-        res.write(`data: ${JSON.stringify({ error: `Erro da OpenAI: ${error.message}` })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: `Erro da OpenAI: ${error.message}` })}\n\n`, 'utf8');
       } else {
         const err = error instanceof Error ? error : new Error(String(error));
         this.logger.error('Erro inesperado no streaming', err.stack);
-        res.write(`data: ${JSON.stringify({ error: 'Erro inesperado ao processar sua solicitação.' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: 'Erro inesperado ao processar sua solicitação.' })}\n\n`, 'utf8');
       }
     } finally {
       res.end();
