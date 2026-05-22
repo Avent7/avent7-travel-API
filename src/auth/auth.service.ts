@@ -42,6 +42,7 @@ export class AuthService {
     const user = await this.usersService.create(
       { name: dto.name, email: dto.email, password: dto.password, role: UserRole.ADMIN },
       dto.agencyId,
+      null,
     );
 
     const tokens = await this.generateTokens(user.id, user.email, user.agencyId, user.role as UserRole);

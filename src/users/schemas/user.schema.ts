@@ -7,8 +7,8 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agency', required: true })
-  agencyId: mongoose.Types.ObjectId;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agency', required: false, default: null })
+  agencyId: mongoose.Types.ObjectId | null;
 
   @Prop({ required: true, trim: true })
   name: string;

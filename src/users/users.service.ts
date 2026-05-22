@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -13,6 +14,7 @@ import { IUser } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UserRole } from './enums/user-role.enum';
 import { S3Service } from '../storage/s3.service';
 
 @Injectable()
@@ -24,12 +26,24 @@ export class UsersService {
 
   async findAll(agencyId: string): Promise<Omit<IUser, 'password'>[]> {
     const users = await this.userRepo.findAll(agencyId);
-    return users.map(({ password: _, ...u }) => u);
+    return users
+      .filter(u => u.role !== UserRole.SUPERADMIN)
+      .map(({ password: _, ...u }) => u);
   }
 
-  async findById(id: string): Promise<Omit<IUser, 'password'>> {
+  async findById(
+    id: string,
+    requesterRole?: string | null,
+    requesterAgencyId?: string | null,
+  ): Promise<Omit<IUser, 'password'>> {
     const user = await this.userRepo.findById(id);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
+
+    if (requesterRole === UserRole.ADMIN) {
+      if (user.role === UserRole.SUPERADMIN) throw new ForbiddenException('Acesso negado.');
+      if (user.agencyId !== requesterAgencyId) throw new ForbiddenException('Acesso negado.');
+    }
+
     const { password: _, ...result } = user;
     return result;
   }
@@ -42,25 +56,59 @@ export class UsersService {
 
   async create(
     dto: CreateUserDto,
-    agencyId: string,
+    agencyId: string | null,
+    requesterRole: string | null,
   ): Promise<Omit<IUser, 'password'>> {
+    if (dto.role === UserRole.SUPERADMIN) {
+      if (agencyId) throw new BadRequestException('Superadmin não pode ter agência associada.');
+      if (requesterRole !== UserRole.SUPERADMIN) {
+        throw new ForbiddenException('Apenas superadmins podem criar outros superadmins.');
+      }
+    }
+
     const existing = await this.userRepo.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email já está em uso.');
 
     const hashed = await bcrypt.hash(dto.password, 10);
-    const user = await this.userRepo.create({ ...dto, password: hashed, agencyId });
+    const user = await this.userRepo.create({ ...dto, password: hashed, agencyId: agencyId! });
     const { password: _, ...result } = user;
     return result;
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<Omit<IUser, 'password'>> {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+    requesterRole?: string | null,
+    requesterAgencyId?: string | null,
+  ): Promise<Omit<IUser, 'password'>> {
+    const target = await this.userRepo.findById(id);
+    if (!target) throw new NotFoundException('Usuário não encontrado.');
+
+    if (requesterRole === UserRole.ADMIN) {
+      if (target.role === UserRole.SUPERADMIN) throw new ForbiddenException('Acesso negado.');
+      if (target.agencyId !== requesterAgencyId) throw new ForbiddenException('Acesso negado.');
+      if (dto.role === UserRole.SUPERADMIN) throw new ForbiddenException('Acesso negado.');
+    }
+
     const updated = await this.userRepo.update(id, dto);
     if (!updated) throw new NotFoundException('Usuário não encontrado.');
     const { password: _, ...result } = updated;
     return result;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(
+    id: string,
+    requesterRole?: string | null,
+    requesterAgencyId?: string | null,
+  ): Promise<void> {
+    const target = await this.userRepo.findById(id);
+    if (!target) throw new NotFoundException('Usuário não encontrado.');
+
+    if (requesterRole === UserRole.ADMIN) {
+      if (target.role === UserRole.SUPERADMIN) throw new ForbiddenException('Acesso negado.');
+      if (target.agencyId !== requesterAgencyId) throw new ForbiddenException('Acesso negado.');
+    }
+
     const deleted = await this.userRepo.remove(id);
     if (!deleted) throw new NotFoundException('Usuário não encontrado.');
   }

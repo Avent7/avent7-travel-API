@@ -72,7 +72,9 @@ export class UsersController {
   @Auth(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get user by id' })
   findOne(@Param('id') id: string) {
-    return this.usersService.findById(id);
+    const role = this.requestContext.getUserRole();
+    const agencyId = this.requestContext.getAgencyId();
+    return this.usersService.findById(id, role, agencyId);
   }
 
   @Post()
@@ -81,7 +83,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Create a new user (admin only)' })
   create(@Body() dto: CreateUserDto) {
     const agencyId = this.requestContext.getAgencyId();
-    return this.usersService.create(dto, agencyId!);
+    const role = this.requestContext.getUserRole();
+    return this.usersService.create(dto, agencyId, role);
   }
 
   @Patch(':id')
@@ -89,7 +92,9 @@ export class UsersController {
   @LogOperation('update_user')
   @ApiOperation({ summary: 'Update user' })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+    const role = this.requestContext.getUserRole();
+    const agencyId = this.requestContext.getAgencyId();
+    return this.usersService.update(id, dto, role, agencyId);
   }
 
   @Delete(':id')
@@ -98,6 +103,8 @@ export class UsersController {
   @LogOperation('delete_user')
   @ApiOperation({ summary: 'Delete user' })
   remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+    const role = this.requestContext.getUserRole();
+    const agencyId = this.requestContext.getAgencyId();
+    return this.usersService.remove(id, role, agencyId);
   }
 }
