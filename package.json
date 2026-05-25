@@ -11,6 +11,7 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "seed:admin": "ts-node -P tsconfig.seed.json src/seeds/seed-admin.ts",
     "seed:briefing-template": "ts-node -P tsconfig.seed.json src/seeds/seed-briefing-template.ts",
+    "seed:briefing-template-particular": "ts-node -P tsconfig.seed.json src/seeds/seed-briefing-template-particular.ts",
     "seed:sync-client-counts": "ts-node -P tsconfig.seed.json src/seeds/seed-sync-client-counts.ts",
     "seed:migrate-client-segments": "ts-node -P tsconfig.seed.json src/seeds/seed-migrate-client-segments.ts"
   },
