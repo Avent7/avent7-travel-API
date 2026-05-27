@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -62,10 +63,20 @@ export class UsersController {
 
   @Get()
   @Auth(UserRole.ADMIN)
-  @ApiOperation({ summary: 'List all users in the agency' })
-  findAll() {
+  @ApiOperation({ summary: 'List users in the agency (paginated)' })
+  findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('role') role?: string,
+    @Query('status') status?: string,
+  ) {
     const agencyId = this.requestContext.getAgencyId();
-    return this.usersService.findAll(agencyId!);
+    return this.usersService.findAll(agencyId!, {
+      page: Math.max(1, parseInt(page, 10) || 1),
+      limit: Math.min(100, Math.max(1, parseInt(limit, 10) || 10)),
+      role,
+      status,
+    });
   }
 
   @Get(':id')

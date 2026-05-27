@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Proposta, PropostaDocument } from '../propostas/schemas/proposta.schema';
 import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
+import { Viagem, ViagemDocument } from '../viagens/schemas/viagem.schema';
+import { Briefing, BriefingDocument } from '../briefings/schemas/briefing.schema';
 import { PropostaStatus } from '../propostas/enums/proposta.enum';
 
 export interface KpiItem {
@@ -52,12 +54,89 @@ function pctChange(current: number, previous: number): { delta: string; changeTy
   return { delta: formatPct(pct), changeType };
 }
 
+const ACTIVE_VIAGEM_STATUSES = ['draft', 'sent_to_client', 'revision_requested', 'approved'];
+const PENDING_BRIEFING_STATUSES = ['sent', 'client_filling'];
+
+export interface DashboardRecentProposta {
+  id: string;
+  propostaCode: string;
+  title: string | null;
+  status: string;
+  totalSaleUsd: number;
+  createdAt: Date;
+}
+
+export interface DashboardSummary {
+  pipelineCounts: Record<string, number>;
+  totalViagens: number;
+  activeTrips: number;
+  pendingBriefings: number;
+  pendingPropostas: number;
+  conversionRate: number | null;
+  recentPropostas: DashboardRecentProposta[];
+}
+
 @Injectable()
 export class DashboardService {
   constructor(
     @InjectModel(Proposta.name) private readonly propostaModel: Model<PropostaDocument>,
     @InjectModel(Booking.name) private readonly bookingModel: Model<BookingDocument>,
+    @InjectModel(Viagem.name) private readonly viagemModel: Model<ViagemDocument>,
+    @InjectModel(Briefing.name) private readonly briefingModel: Model<BriefingDocument>,
   ) {}
+
+  async getSummary(agencyId: string): Promise<DashboardSummary> {
+    const agencyOid = new Types.ObjectId(agencyId);
+
+    const [statusRows, pendingBriefings, propostaRows, recentDocs] = await Promise.all([
+      this.viagemModel.aggregate<{ _id: string; count: number }>([
+        { $match: { agencyId: agencyOid } },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+      this.briefingModel.countDocuments({
+        agencyId: agencyOid,
+        status: { $in: PENDING_BRIEFING_STATUSES },
+      }),
+      this.propostaModel.aggregate<{ _id: string; count: number }>([
+        { $match: { agencyId: agencyOid } },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+      this.propostaModel
+        .find({ agencyId: agencyOid })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('propostaCode title status totalSaleUsd createdAt')
+        .lean<Array<{ _id: Types.ObjectId; propostaCode: string; title?: string; status: string; totalSaleUsd: number; createdAt: Date }>>(),
+    ]);
+
+    const pipelineCounts: Record<string, number> = {};
+    for (const row of statusRows) pipelineCounts[row._id] = row.count;
+    const totalViagens = statusRows.reduce((sum, r) => sum + r.count, 0);
+    const activeTrips = ACTIVE_VIAGEM_STATUSES.reduce((sum, s) => sum + (pipelineCounts[s] ?? 0), 0);
+
+    const propostaCountMap: Record<string, number> = {};
+    for (const row of propostaRows) propostaCountMap[row._id] = row.count;
+    const approvedCount = propostaCountMap[PropostaStatus.APPROVED] ?? 0;
+    const refusedCount = propostaCountMap[PropostaStatus.REFUSED] ?? 0;
+    const decided = approvedCount + refusedCount;
+
+    return {
+      pipelineCounts,
+      totalViagens,
+      activeTrips,
+      pendingBriefings,
+      pendingPropostas: propostaCountMap[PropostaStatus.PENDING] ?? 0,
+      conversionRate: decided === 0 ? null : (approvedCount / decided) * 100,
+      recentPropostas: recentDocs.map((doc) => ({
+        id: doc._id.toString(),
+        propostaCode: doc.propostaCode,
+        title: doc.title ?? null,
+        status: doc.status,
+        totalSaleUsd: doc.totalSaleUsd ?? 0,
+        createdAt: doc.createdAt,
+      })),
+    };
+  }
 
   async getKpis(agencyId: string): Promise<KpiItem[]> {
     const agencyObjectId = new Types.ObjectId(agencyId);

@@ -20,6 +20,8 @@ export interface IProposta {
   heroImageUrl: string | null;
   destinations: string[];
   clientMessage: string | null;
+  passengerIds: string[];
+  clientIsTraveling: boolean;
   sentToClientAt: Date | null;
   approvedAt: Date | null;
   bookedAt: Date | null;

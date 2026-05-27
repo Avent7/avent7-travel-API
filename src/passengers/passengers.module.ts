@@ -6,9 +6,10 @@ import { PassengersController } from './passengers.controller';
 import { PassengerMongooseRepository } from './repositories/passenger.mongoose.repository';
 import { PASSENGER_REPOSITORY } from './interfaces/passenger.repository.interface';
 import { ClientsModule } from '../clients/clients.module';
+import { ClientSegmentsModule } from '../client-segments/client-segments.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Passenger.name, schema: PassengerSchema }]), ClientsModule],
+  imports: [MongooseModule.forFeature([{ name: Passenger.name, schema: PassengerSchema }]), ClientsModule, ClientSegmentsModule],
   controllers: [PassengersController],
   providers: [
     PassengersService,

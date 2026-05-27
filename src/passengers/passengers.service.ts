@@ -5,12 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as sharp from 'sharp';
-import { IPassengerRepository, PASSENGER_REPOSITORY } from './interfaces/passenger.repository.interface';
-import { IPassenger } from './interfaces/passenger.interface';
+import { IPassengerRepository, PASSENGER_REPOSITORY, PassengerQuery } from './interfaces/passenger.repository.interface';
+import { IPassenger, IPassengerPage } from './interfaces/passenger.interface';
 import { CreatePassengerDto } from './dto/create-passenger.dto';
 import { UpdatePassengerDto } from './dto/update-passenger.dto';
 import { S3Service } from '../storage/s3.service';
 import { ClientsService } from '../clients/clients.service';
+import { ClientSegmentsService } from '../client-segments/client-segments.service';
 
 @Injectable()
 export class PassengersService {
@@ -18,6 +19,7 @@ export class PassengersService {
     @Inject(PASSENGER_REPOSITORY) private readonly repo: IPassengerRepository,
     private readonly s3: S3Service,
     private readonly clientsService: ClientsService,
+    private readonly segmentsService: ClientSegmentsService,
   ) {}
 
   async findAll(agencyId: string): Promise<IPassenger[]> {
@@ -26,6 +28,14 @@ export class PassengersService {
 
   async findByClientId(clientId: string): Promise<IPassenger[]> {
     return this.repo.findByClientId(clientId);
+  }
+
+  async findPaginated(agencyId: string, query: PassengerQuery): Promise<IPassengerPage> {
+    const [paged, segments] = await Promise.all([
+      this.repo.findPaginated(agencyId, query),
+      this.segmentsService.findAllForAgency(agencyId).catch(() => []),
+    ]);
+    return { ...paged, segments };
   }
 
   async findById(id: string): Promise<IPassenger> {

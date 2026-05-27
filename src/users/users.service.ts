@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as sharp from 'sharp';
-import { IUserRepository, USER_REPOSITORY } from './interfaces/user.repository.interface';
+import { IUserRepository, USER_REPOSITORY, FindUsersParams, PaginatedUsers } from './interfaces/user.repository.interface';
 import { IUser } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -24,11 +24,12 @@ export class UsersService {
     private readonly s3: S3Service,
   ) {}
 
-  async findAll(agencyId: string): Promise<Omit<IUser, 'password'>[]> {
-    const users = await this.userRepo.findAll(agencyId);
-    return users
-      .filter(u => u.role !== UserRole.SUPERADMIN)
-      .map(({ password: _, ...u }) => u);
+  async findAll(agencyId: string, params: FindUsersParams): Promise<PaginatedUsers<Omit<IUser, 'password'>>> {
+    const result = await this.userRepo.findAll(agencyId, params);
+    return {
+      ...result,
+      data: result.data.map(({ password: _, ...u }) => u),
+    };
   }
 
   async findById(

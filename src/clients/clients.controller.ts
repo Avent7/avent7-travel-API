@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nes
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { ClientQueryDto } from './dto/client-query.dto';
 import { Auth } from '../common/decorators/auth.decorator';
 import { RequestContextService } from '../common/cls/request-context.service';
 import { LogOperation } from '../common/decorators/log-operation.decorator';
@@ -31,10 +33,10 @@ export class ClientsController {
 
   @Get()
   @Auth()
-  @ApiOperation({ summary: 'List all clients of the agency' })
-  findAll() {
+  @ApiOperation({ summary: 'List clients (paginated, filterable)' })
+  findAll(@Query() query: ClientQueryDto) {
     const agencyId = this.requestContext.getAgencyId();
-    return this.clientsService.findAll(agencyId!);
+    return this.clientsService.findPaged(agencyId!, query);
   }
 
   @Get(':id')

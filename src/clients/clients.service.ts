@@ -9,6 +9,8 @@ import { IClientRepository, CLIENT_REPOSITORY } from './interfaces/client.reposi
 import { IClient } from './interfaces/client.interface';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { ClientQueryDto } from './dto/client-query.dto';
+import { IClientsListResult } from './interfaces/clients-list-result.interface';
 import { S3Service } from '../storage/s3.service';
 import { ClientSegmentsService } from '../client-segments/client-segments.service';
 
@@ -27,6 +29,14 @@ export class ClientsService {
 
   async findAll(agencyId: string): Promise<IClient[]> {
     return this.repo.findAll(agencyId);
+  }
+
+  async findPaged(agencyId: string, query: ClientQueryDto): Promise<IClientsListResult> {
+    const [paged, segments] = await Promise.all([
+      this.repo.findPaged(agencyId, query),
+      this.segmentsService.findAllForAgency(agencyId).catch(() => []),
+    ]);
+    return { ...paged, segments };
   }
 
   async findById(id: string): Promise<IClient> {

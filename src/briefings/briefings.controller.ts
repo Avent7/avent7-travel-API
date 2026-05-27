@@ -47,11 +47,11 @@ export class BriefingsController {
   @Auth()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List all briefings' })
-  @ApiQuery({ name: 'viagemId', required: false })
-  findAll(@Query('viagemId') viagemId?: string) {
+  @ApiQuery({ name: 'tripId', required: false })
+  findAll(@Query('tripId') tripId?: string) {
     const agencyId = this.requestContext.getAgencyId();
-    if (viagemId) {
-      return this.briefingsService.findByViagem(agencyId!, viagemId);
+    if (tripId) {
+      return this.briefingsService.findByViagem(agencyId!, tripId);
     }
     return this.briefingsService.findAll(agencyId!);
   }

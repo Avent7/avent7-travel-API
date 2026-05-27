@@ -7,11 +7,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BriefingTemplatesService } from './briefing-templates.service';
 import { CreateBriefingTemplateDto } from './dto/create-briefing-template.dto';
 import { UpdateBriefingTemplateDto } from './dto/update-briefing-template.dto';
+import { BriefingTemplateQueryDto } from './dto/briefing-template-query.dto';
 import { Auth } from '../common/decorators/auth.decorator';
 import { RequestContextService } from '../common/cls/request-context.service';
 
@@ -26,10 +28,10 @@ export class BriefingTemplatesController {
 
   @Get()
   @Auth()
-  @ApiOperation({ summary: 'List briefing templates for the agency' })
-  findAll() {
+  @ApiOperation({ summary: 'List briefing templates (paginated, filterable)' })
+  findAll(@Query() query: BriefingTemplateQueryDto) {
     const agencyId = this.requestContext.getAgencyId();
-    return this.service.findAllForAgency(agencyId!);
+    return this.service.findPaged(agencyId!, query);
   }
 
   @Get(':id')

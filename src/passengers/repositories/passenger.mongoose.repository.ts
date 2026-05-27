@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 import { Passenger, PassengerDocument } from '../schemas/passenger.schema';
-import { IPassengerRepository } from '../interfaces/passenger.repository.interface';
-import { IPassenger } from '../interfaces/passenger.interface';
+import { IPassengerRepository, PassengerQuery } from '../interfaces/passenger.repository.interface';
+import { IPassenger, IPassengerPage, IPassengerWithClient } from '../interfaces/passenger.interface';
 import { CreatePassengerDto } from '../dto/create-passenger.dto';
 import { UpdatePassengerDto } from '../dto/update-passenger.dto';
 import { Gender } from '../enums/passenger.enum';
@@ -48,6 +48,87 @@ export class PassengerMongooseRepository implements IPassengerRepository {
       .find({ clientId: new Types.ObjectId(clientId) })
       .lean<MongoPax[]>();
     return docs.map((d) => this.toIPax(d));
+  }
+
+  async findPaginated(agencyId: string, query: PassengerQuery): Promise<IPassengerPage> {
+    const { page = 1, limit = 20, search, clientId } = query;
+    const filter: FilterQuery<PassengerDocument> = {
+      agencyId: new Types.ObjectId(agencyId),
+    };
+
+    if (clientId && Types.ObjectId.isValid(clientId)) {
+      filter.clientId = new Types.ObjectId(clientId);
+    }
+
+    if (search?.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      filter.$or = [{ fullName: regex }, { socialName: regex }];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      this.model
+        .find(filter)
+        .populate({
+          path: 'clientId',
+          select: 'clientCode fullName socialName emailPrimary phonePrimary photoUrl segmentId',
+          populate: { path: 'segmentId', select: 'name icon color' },
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.model.countDocuments(filter),
+    ]);
+
+    return {
+      data: (docs as any[]).map((d) => this.toIPaxWithClient(d)),
+      total,
+      page,
+      limit,
+      segments: [],
+    };
+  }
+
+  private toIPaxWithClient(doc: any): IPassengerWithClient {
+    const clientDoc =
+      doc.clientId && typeof doc.clientId === 'object' && doc.clientId._id
+        ? doc.clientId
+        : null;
+
+    const pax = this.toIPax({
+      ...doc,
+      clientId: clientDoc ? clientDoc._id : doc.clientId,
+    });
+
+    return {
+      ...pax,
+      client: clientDoc
+        ? {
+            id: clientDoc._id.toString(),
+            clientCode: clientDoc.clientCode,
+            fullName: clientDoc.fullName,
+            socialName: clientDoc.socialName ?? null,
+            emailPrimary: clientDoc.emailPrimary,
+            phonePrimary: clientDoc.phonePrimary ?? null,
+            photoUrl: clientDoc.photoUrl ?? null,
+            segmentId: clientDoc.segmentId
+              ? (typeof clientDoc.segmentId === 'object' && clientDoc.segmentId._id
+                  ? clientDoc.segmentId._id.toString()
+                  : clientDoc.segmentId.toString())
+              : null,
+            segment:
+              clientDoc.segmentId && typeof clientDoc.segmentId === 'object' && clientDoc.segmentId._id
+                ? {
+                    id: clientDoc.segmentId._id.toString(),
+                    name: clientDoc.segmentId.name,
+                    icon: clientDoc.segmentId.icon,
+                    color: clientDoc.segmentId.color,
+                  }
+                : null,
+          }
+        : null,
+    };
   }
 
   async findById(id: string): Promise<IPassenger | null> {

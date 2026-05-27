@@ -71,6 +71,12 @@ export class Proposta {
   @Prop({ default: null })
   clientMessage: string | null;
 
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Passenger', default: [] })
+  passengerIds: mongoose.Types.ObjectId[];
+
+  @Prop({ default: false })
+  clientIsTraveling: boolean;
+
   @Prop({ default: null })
   sentToClientAt: Date | null;
 

@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 import { Client, ClientDocument } from '../schemas/client.schema';
 import { IClientRepository } from '../interfaces/client.repository.interface';
 import { IClient } from '../interfaces/client.interface';
 import { CreateClientDto } from '../dto/create-client.dto';
 import { UpdateClientDto } from '../dto/update-client.dto';
+import { ClientQueryDto } from '../dto/client-query.dto';
 import { DocumentType, Gender } from '../enums/client.enum';
+import { PagedResult } from '../../common/types/paged-result.type';
 
 type PopulatedSegment = {
   _id: Types.ObjectId;
@@ -82,8 +84,47 @@ export class ClientMongooseRepository implements IClientRepository {
     const docs = await this.model
       .find({ agencyId: new Types.ObjectId(agencyId) })
       .populate('segmentId', 'name icon color')
+      .sort({ createdAt: -1 })
       .lean<MongoClient[]>();
     return docs.map((d) => this.toIClient(d));
+  }
+
+  async findPaged(agencyId: string, query: ClientQueryDto): Promise<PagedResult<IClient>> {
+    const { page = 1, pageSize = 15 } = query;
+
+    const filter: FilterQuery<ClientDocument> = {
+      agencyId: new Types.ObjectId(agencyId),
+    };
+    if (query.segmentId) filter.segmentId = new Types.ObjectId(query.segmentId);
+    if (query.isActive !== undefined) filter.isActive = query.isActive;
+    if (query.search) {
+      const re = new RegExp(query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [
+        { fullName: re },
+        { socialName: re },
+        { emailPrimary: re },
+        { clientCode: re },
+      ];
+    }
+
+    const [docs, total] = await Promise.all([
+      this.model
+        .find(filter)
+        .populate('segmentId', 'name icon color')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean<MongoClient[]>(),
+      this.model.countDocuments(filter),
+    ]);
+
+    return {
+      data: docs.map((d) => this.toIClient(d)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
   }
 
   async findById(id: string): Promise<IClient | null> {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
-import { IUserRepository } from '../interfaces/user.repository.interface';
+import { IUserRepository, FindUsersParams, PaginatedUsers } from '../interfaces/user.repository.interface';
 import { IUser } from '../interfaces/user.interface';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -31,11 +31,50 @@ export class UserMongooseRepository implements IUserRepository {
     };
   }
 
-  async findAll(agencyId: string): Promise<IUser[]> {
-    const docs = await this.userModel
-      .find({ agencyId: new Types.ObjectId(agencyId) })
-      .lean<MongoUser[]>();
-    return docs.map((d) => this.toIUser(d));
+  async findAll(agencyId: string, params: FindUsersParams): Promise<PaginatedUsers<IUser>> {
+    const { page, limit, role, status } = params;
+    const skip = (page - 1) * limit;
+
+    const baseFilter: Record<string, unknown> = {
+      agencyId: new Types.ObjectId(agencyId),
+      role: { $ne: UserRole.SUPERADMIN },
+    };
+
+    const dataFilter: Record<string, unknown> = { ...baseFilter };
+    if (role && role !== 'all') dataFilter.role = role;
+    if (status === 'active') dataFilter.isActive = true;
+    else if (status === 'inactive') dataFilter.isActive = false;
+
+    const [countResult, docs, total] = await Promise.all([
+      this.userModel.aggregate([
+        { $match: baseFilter },
+        {
+          $group: {
+            _id: null,
+            admins: { $sum: { $cond: [{ $eq: ['$role', UserRole.ADMIN] }, 1, 0] } },
+            employees: { $sum: { $cond: [{ $eq: ['$role', UserRole.EMPLOYEE] }, 1, 0] } },
+            active: { $sum: { $cond: ['$isActive', 1, 0] } },
+            inactive: { $sum: { $cond: [{ $not: '$isActive' }, 1, 0] } },
+          },
+        },
+      ]),
+      this.userModel.find(dataFilter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean<MongoUser[]>(),
+      this.userModel.countDocuments(dataFilter),
+    ]);
+
+    const c = countResult[0] ?? { admins: 0, employees: 0, active: 0, inactive: 0 };
+
+    return {
+      data: docs.map((d) => this.toIUser(d)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+      counts: {
+        byRole: { admin: c.admins, employee: c.employees },
+        byStatus: { active: c.active, inactive: c.inactive },
+      },
+    };
   }
 
   async findById(id: string): Promise<IUser | null> {

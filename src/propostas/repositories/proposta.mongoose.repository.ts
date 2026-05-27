@@ -27,6 +27,8 @@ type MongoBlockSub = {
 type MongoProposta = Proposta & {
   _id: Types.ObjectId;
   briefingId?: Types.ObjectId;
+  passengerIds?: Types.ObjectId[];
+  clientIsTraveling?: boolean;
   blocks: MongoBlockSub[];
   createdAt: Date;
   updatedAt: Date;
@@ -85,6 +87,8 @@ export class PropostaMongooseRepository implements IPropostaRepository {
       heroImageUrl: doc.heroImageUrl ?? null,
       destinations: doc.destinations ?? [],
       clientMessage: doc.clientMessage ?? null,
+      passengerIds: (doc.passengerIds ?? []).map((id) => id.toString()),
+      clientIsTraveling: doc.clientIsTraveling ?? false,
       sentToClientAt: doc.sentToClientAt ?? null,
       approvedAt: doc.approvedAt ?? null,
       bookedAt: doc.bookedAt ?? null,

@@ -13,6 +13,16 @@ export class DashboardController {
     private readonly requestContext: RequestContextService,
   ) {}
 
+  @Get('summary')
+  @Auth()
+  @ApiOperation({
+    summary: 'Resumo operacional — pipeline counts, KPIs e propostas recentes em uma única chamada',
+  })
+  getSummary() {
+    const agencyId = this.requestContext.getAgencyId();
+    return this.dashboardService.getSummary(agencyId!);
+  }
+
   @Get('kpis')
   @Auth()
   @ApiOperation({ summary: 'KPI cards (GMV, lucro, take rate, ticket médio — YTD)' })

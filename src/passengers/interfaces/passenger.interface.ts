@@ -1,4 +1,5 @@
 import { Gender } from '../enums/passenger.enum';
+import { IClientSegmentWithCount } from '../../client-segments/interfaces/client-segment.interface';
 
 export interface IPassenger {
   id: string;
@@ -21,4 +22,35 @@ export interface IPassenger {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IPassengerClientSegment {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export interface IPassengerClient {
+  id: string;
+  clientCode: string;
+  fullName: string;
+  socialName: string | null;
+  emailPrimary: string;
+  phonePrimary: string | null;
+  photoUrl: string | null;
+  segmentId: string | null;
+  segment: IPassengerClientSegment | null;
+}
+
+export interface IPassengerWithClient extends IPassenger {
+  client: IPassengerClient | null;
+}
+
+export interface IPassengerPage {
+  data: IPassengerWithClient[];
+  total: number;
+  page: number;
+  limit: number;
+  segments: IClientSegmentWithCount[];
 }

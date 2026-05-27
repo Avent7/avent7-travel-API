@@ -17,6 +17,7 @@ import { ViagensService } from './viagens.service';
 import { CreateViagemDto } from './dto/create-viagem.dto';
 import { UpdateViagemDto } from './dto/update-viagem.dto';
 import { ViagemQueryDto } from './dto/viagem-query.dto';
+import { PipelineQueryDto } from './dto/pipeline-query.dto';
 import { Auth } from '../common/decorators/auth.decorator';
 import { RequestContextService } from '../common/cls/request-context.service';
 import { LogOperation } from '../common/decorators/log-operation.decorator';
@@ -38,19 +39,30 @@ export class ViagensController {
     return this.viagensService.findPaged(agencyId!, query);
   }
 
-  @Get('all')
+  @Get('pipeline')
   @Auth()
-  @ApiOperation({ summary: 'List all viagens without pagination (for pipeline/kanban)' })
-  findAllUnpaged() {
+  @ApiOperation({
+    summary: 'Pipeline view — carrega viagens por coluna com populate de cliente/operador e contagens',
+    description:
+      'Sem `status`: retorna todas as colunas (carga inicial, 5 por status). ' +
+      'Com `status`: retorna a página solicitada daquela coluna (scroll infinito).',
+  })
+  findPipeline(@Query() query: PipelineQueryDto) {
     const agencyId = this.requestContext.getAgencyId();
-    return this.viagensService.findAll(agencyId!);
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 5;
+    if (query.status) {
+      return this.viagensService.findPipelineColumn(agencyId!, query.status, page, pageSize);
+    }
+    return this.viagensService.findPipelineAll(agencyId!, pageSize);
   }
 
   @Get(':id')
   @Auth()
-  @ApiOperation({ summary: 'Get viagem by id' })
+  @ApiOperation({ summary: 'Get viagem by id with briefings and propostas' })
   findOne(@Param('id') id: string) {
-    return this.viagensService.findById(id);
+    const agencyId = this.requestContext.getAgencyId();
+    return this.viagensService.findByIdDetail(id, agencyId!);
   }
 
   @Post()

@@ -32,12 +32,24 @@ export class PassengersController {
 
   @Get()
   @Auth()
-  @ApiQuery({ name: 'clientId', required: false })
-  @ApiOperation({ summary: 'List passengers — all in agency or filtered by client' })
-  find(@Query('clientId') clientId?: string) {
-    if (clientId) return this.passengersService.findByClientId(clientId);
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
+  @ApiQuery({ name: 'search', required: false, description: 'Filter by full name or social name' })
+  @ApiQuery({ name: 'clientId', required: false, description: 'Filter by client' })
+  @ApiOperation({ summary: 'List passengers with pagination and embedded client data' })
+  find(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('clientId') clientId?: string,
+  ) {
     const agencyId = this.requestContext.getAgencyId();
-    return this.passengersService.findAll(agencyId!);
+    return this.passengersService.findPaginated(agencyId!, {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      search,
+      clientId,
+    });
   }
 
   @Get(':id')

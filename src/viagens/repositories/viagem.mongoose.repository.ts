@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model, Types } from 'mongoose';
+import { FilterQuery, Model, PipelineStage, Types } from 'mongoose';
 import { Viagem, ViagemDocument } from '../schemas/viagem.schema';
 import { IViagemRepository } from '../interfaces/viagem.repository.interface';
 import { IViagem } from '../interfaces/viagem.interface';
+import { IPipelineViagem, IPipelineColumnData, IPipelineResponse } from '../interfaces/pipeline-viagem.interface';
 import { CreateViagemDto } from '../dto/create-viagem.dto';
 import { UpdateViagemDto } from '../dto/update-viagem.dto';
 import { ViagemQueryDto } from '../dto/viagem-query.dto';
@@ -47,22 +48,31 @@ export class ViagemMongooseRepository implements IViagemRepository {
     return filter;
   }
 
-  async findPaged(agencyId: string, query: ViagemQueryDto): Promise<PagedResult<IViagem>> {
+  async findPaged(agencyId: string, query: ViagemQueryDto): Promise<PagedResult<IPipelineViagem>> {
     const { page = 1, pageSize = 10 } = query;
     const filter = this.buildFilter(agencyId, query);
+    const skip = (page - 1) * pageSize;
 
-    const [docs, total] = await Promise.all([
-      this.model
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .lean<MongoViagem[]>(),
-      this.model.countDocuments(filter),
-    ]);
+    const [result] = await this.model
+      .aggregate([
+        { $match: filter },
+        { $sort: { createdAt: -1 } },
+        {
+          $facet: {
+            data: [{ $skip: skip }, { $limit: pageSize }, ...(this.pipelineLookupStages() as any)],
+            total: [{ $count: 'count' }],
+          },
+        },
+      ])
+      .exec();
+
+    const total: number = result?.total?.[0]?.count ?? 0;
+    const data: IPipelineViagem[] = (result?.data ?? []).map((d: any) =>
+      this.toIPipelineViagem(d),
+    );
 
     return {
-      data: docs.map((d) => this.toI(d)),
+      data,
       total,
       page,
       pageSize,
@@ -76,6 +86,144 @@ export class ViagemMongooseRepository implements IViagemRepository {
       .sort({ createdAt: -1 })
       .lean<MongoViagem[]>();
     return docs.map((d) => this.toI(d));
+  }
+
+  // ─── Pipeline ────────────────────────────────────────────────────────────────
+
+  private pipelineLookupStages(): PipelineStage[] {
+    return [
+      {
+        $lookup: {
+          from: 'clients',
+          let: { clientId: '$clientId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$clientId'] } } },
+            { $project: { socialName: 1, fullName: 1, photoUrl: 1 } },
+          ],
+          as: 'clientDoc',
+        },
+      },
+      { $unwind: { path: '$clientDoc', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$createdByUserId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [{ $ne: ['$$userId', null] }, { $eq: ['$_id', '$$userId'] }],
+                },
+              },
+            },
+            { $project: { name: 1, profileImageUrl: 1 } },
+          ],
+          as: 'operatorDoc',
+        },
+      },
+      { $unwind: { path: '$operatorDoc', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'briefings',
+          let: { vid: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$viagemId', '$$vid'] } } },
+            { $count: 'n' },
+          ],
+          as: 'briefingsCount',
+        },
+      },
+      {
+        $lookup: {
+          from: 'propostas',
+          let: { vid: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$viagemId', '$$vid'] } } },
+            { $count: 'n' },
+          ],
+          as: 'propostasCount',
+        },
+      },
+    ];
+  }
+
+  private toIPipelineViagem(doc: any): IPipelineViagem {
+    return {
+      id: doc._id.toString(),
+      agencyId: doc.agencyId?.toString() ?? '',
+      clientId: doc.clientId?.toString() ?? '',
+      passengerId: doc.passengerId?.toString() ?? null,
+      createdByUserId: doc.createdByUserId?.toString() ?? null,
+      viagemCode: doc.viagemCode,
+      title: doc.title,
+      status: doc.status as ViagemStatus,
+      coverImageUrl: doc.coverImageUrl ?? null,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      client: doc.clientDoc
+        ? {
+            id: doc.clientDoc._id.toString(),
+            name: doc.clientDoc.socialName || doc.clientDoc.fullName,
+            photoUrl: doc.clientDoc.photoUrl ?? null,
+          }
+        : null,
+      operator: doc.operatorDoc
+        ? {
+            id: doc.operatorDoc._id.toString(),
+            name: doc.operatorDoc.name,
+            profileImageUrl: doc.operatorDoc.profileImageUrl ?? null,
+          }
+        : null,
+      counts: {
+        briefings: doc.briefingsCount?.[0]?.n ?? 0,
+        propostas: doc.propostasCount?.[0]?.n ?? 0,
+      },
+    };
+  }
+
+  async findPipelineColumn(
+    agencyId: string,
+    status: ViagemStatus,
+    page: number,
+    pageSize: number,
+  ): Promise<IPipelineColumnData> {
+    const skip = (page - 1) * pageSize;
+    const agencyOid = new Types.ObjectId(agencyId);
+
+    const [result] = await this.model
+      .aggregate([
+        { $match: { agencyId: agencyOid, status } },
+        { $sort: { createdAt: -1 } },
+        {
+          $facet: {
+            viagens: [{ $skip: skip }, { $limit: pageSize }, ...this.pipelineLookupStages() as any],
+            total: [{ $count: 'count' }],
+          },
+        },
+      ])
+      .exec();
+
+    const total: number = result?.total?.[0]?.count ?? 0;
+    const viagens: IPipelineViagem[] = (result?.viagens ?? []).map((d: any) =>
+      this.toIPipelineViagem(d),
+    );
+
+    return {
+      status,
+      viagens,
+      total,
+      page,
+      pageSize,
+      hasMore: skip + viagens.length < total,
+    };
+  }
+
+  async findPipelineAll(agencyId: string, pageSize: number): Promise<IPipelineResponse> {
+    const allStatuses = Object.values(ViagemStatus);
+    const columns = await Promise.all(
+      allStatuses.map((status) => this.findPipelineColumn(agencyId, status, 1, pageSize)),
+    );
+    return { columns };
   }
 
   async findByClient(agencyId: string, clientId: string): Promise<IViagem[]> {

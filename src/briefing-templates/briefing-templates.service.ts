@@ -6,6 +6,8 @@ import {
 import { IBriefingTemplate } from './interfaces/briefing-template.interface';
 import { CreateBriefingTemplateDto } from './dto/create-briefing-template.dto';
 import { UpdateBriefingTemplateDto } from './dto/update-briefing-template.dto';
+import { BriefingTemplateQueryDto } from './dto/briefing-template-query.dto';
+import { PagedResult } from '../common/types/paged-result.type';
 
 @Injectable()
 export class BriefingTemplatesService {
@@ -14,8 +16,13 @@ export class BriefingTemplatesService {
     private readonly repo: IBriefingTemplateRepository,
   ) {}
 
-  async findAllForAgency(agencyId: string): Promise<IBriefingTemplate[]> {
-    return this.repo.findAllForAgency(agencyId);
+  async findPaged(agencyId: string, query: BriefingTemplateQueryDto): Promise<PagedResult<IBriefingTemplate>> {
+    return this.repo.findPaged(agencyId, query);
+  }
+
+  async findActive(agencyId: string): Promise<IBriefingTemplate[]> {
+    const result = await this.repo.findPaged(agencyId, { pageSize: 200, isActive: true });
+    return result.data;
   }
 
   async findById(id: string): Promise<IBriefingTemplate> {

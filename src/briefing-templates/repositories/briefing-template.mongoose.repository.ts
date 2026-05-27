@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 import {
   BriefingTemplate,
   BriefingTemplateDocument,
@@ -9,6 +9,8 @@ import { IBriefingTemplateRepository } from '../interfaces/briefing-template.rep
 import { IBriefingTemplate } from '../interfaces/briefing-template.interface';
 import { CreateBriefingTemplateDto } from '../dto/create-briefing-template.dto';
 import { UpdateBriefingTemplateDto } from '../dto/update-briefing-template.dto';
+import { BriefingTemplateQueryDto } from '../dto/briefing-template-query.dto';
+import { PagedResult } from '../../common/types/paged-result.type';
 
 type MongoTpl = BriefingTemplate & {
   _id: Types.ObjectId;
@@ -37,18 +39,45 @@ export class BriefingTemplateMongooseRepository implements IBriefingTemplateRepo
     };
   }
 
-  async findAllForAgency(agencyId: string): Promise<IBriefingTemplate[]> {
-    const docs = await this.model
-      .find({
-        $or: [
-          { agencyId: new Types.ObjectId(agencyId) },
-          { isGlobal: true },
-        ],
-        isActive: true,
-      })
-      .sort({ createdAt: -1 })
-      .lean<MongoTpl[]>();
-    return docs.map((d) => this.toI(d));
+  async findPaged(agencyId: string, query: BriefingTemplateQueryDto): Promise<PagedResult<IBriefingTemplate>> {
+    const { page = 1, pageSize = 12 } = query;
+
+    const filter: FilterQuery<BriefingTemplateDocument> = {};
+
+    if (query.isGlobal === true) {
+      filter.isGlobal = true;
+    } else if (query.isGlobal === false) {
+      filter.agencyId = new Types.ObjectId(agencyId);
+    } else {
+      filter.$or = [
+        { agencyId: new Types.ObjectId(agencyId) },
+        { isGlobal: true },
+      ];
+    }
+
+    if (query.isActive !== undefined) filter.isActive = query.isActive;
+    if (query.search) {
+      const re = new RegExp(query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.name = re;
+    }
+
+    const [docs, total] = await Promise.all([
+      this.model
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean<MongoTpl[]>(),
+      this.model.countDocuments(filter),
+    ]);
+
+    return {
+      data: docs.map((d) => this.toI(d)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
   }
 
   async findById(id: string): Promise<IBriefingTemplate | null> {
