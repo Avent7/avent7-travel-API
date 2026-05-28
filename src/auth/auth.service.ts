@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -8,9 +9,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { Response } from 'express';
 import { UsersService } from '../users/users.service';
+import { AgenciesService } from '../agencies/agencies.service';
 import { RedisService } from '../redis/redis.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SetupAgencyDto } from './dto/setup-agency.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -31,6 +34,7 @@ export class AuthService {
 
   constructor(
     private readonly usersService: UsersService,
+    private readonly agenciesService: AgenciesService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly redisService: RedisService,
@@ -41,12 +45,28 @@ export class AuthService {
   async register(dto: RegisterDto, res: Response) {
     const user = await this.usersService.create(
       { name: dto.name, email: dto.email, password: dto.password, role: UserRole.ADMIN },
-      dto.agencyId,
+      dto.agencyId ?? null,
       null,
     );
 
     const tokens = await this.generateTokens(user.id, user.email, user.agencyId, user.role as UserRole);
     await this.redisService.setSession(user.id, tokens.accessToken);
+    this.setRefreshCookie(res, tokens.refreshToken);
+
+    return { access_token: tokens.accessToken };
+  }
+
+  // ─── Setup Agency ─────────────────────────────────────────────────────────
+
+  async setupAgency(userId: string, dto: SetupAgencyDto, res: Response) {
+    const user = await this.usersService.findById(userId);
+    if (user.agencyId) throw new BadRequestException('Usuário já possui uma agência vinculada.');
+
+    const agency = await this.agenciesService.create(dto);
+    const updated = await this.usersService.updateAgencyId(userId, agency.id);
+
+    const tokens = await this.generateTokens(updated.id, updated.email, agency.id, updated.role as UserRole);
+    await this.redisService.setSession(updated.id, tokens.accessToken);
     this.setRefreshCookie(res, tokens.refreshToken);
 
     return { access_token: tokens.accessToken };

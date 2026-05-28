@@ -19,7 +19,7 @@ export class UserMongooseRepository implements IUserRepository {
   private toIUser(doc: MongoUser): IUser {
     return {
       id: doc._id.toString(),
-      agencyId: doc.agencyId?.toString() ?? '',
+      agencyId: doc.agencyId?.toString() ?? null,
       name: doc.name,
       email: doc.email,
       password: (doc as any).password ?? '',
@@ -91,10 +91,10 @@ export class UserMongooseRepository implements IUserRepository {
     return doc ? this.toIUser(doc) : null;
   }
 
-  async create(dto: CreateUserDto & { agencyId: string }): Promise<IUser> {
+  async create(dto: CreateUserDto & { agencyId: string | null }): Promise<IUser> {
     const created = await this.userModel.create({
       ...dto,
-      agencyId: new Types.ObjectId(dto.agencyId),
+      agencyId: dto.agencyId ? new Types.ObjectId(dto.agencyId) : null,
     });
     const doc = await this.userModel
       .findById(created._id)

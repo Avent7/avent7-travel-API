@@ -29,7 +29,7 @@ export interface IUserRepository {
   findAll(agencyId: string, params: FindUsersParams): Promise<PaginatedUsers<IUser>>;
   findById(id: string): Promise<IUser | null>;
   findByEmail(email: string): Promise<IUser | null>;
-  create(dto: CreateUserDto & { agencyId: string }): Promise<IUser>;
+  create(dto: CreateUserDto & { agencyId: string | null }): Promise<IUser>;
   update(id: string, dto: UpdateUserDto): Promise<IUser | null>;
   remove(id: string): Promise<boolean>;
 }

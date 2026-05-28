@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsMongoId, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsMongoId, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty()
@@ -15,7 +15,8 @@ export class RegisterDto {
   @MinLength(8)
   password: string;
 
-  @ApiProperty({ description: 'Agency ID (MongoDB ObjectId)' })
+  @ApiProperty({ description: 'Agency ID (MongoDB ObjectId)', required: false })
+  @IsOptional()
   @IsMongoId()
-  agencyId: string;
+  agencyId?: string;
 }

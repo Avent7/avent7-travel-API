@@ -114,6 +114,13 @@ export class UsersService {
     if (!deleted) throw new NotFoundException('Usuário não encontrado.');
   }
 
+  async updateAgencyId(id: string, agencyId: string): Promise<Omit<IUser, 'password'>> {
+    const updated = await this.userRepo.update(id, { agencyId } as any);
+    if (!updated) throw new NotFoundException('Usuário não encontrado.');
+    const { password: _, ...result } = updated;
+    return result;
+  }
+
   async updatePassword(id: string, hashedPassword: string): Promise<void> {
     const updated = await this.userRepo.update(id, { password: hashedPassword } as any);
     if (!updated) throw new NotFoundException('Usuário não encontrado.');

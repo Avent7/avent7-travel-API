@@ -13,6 +13,7 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SetupAgencyDto } from './dto/setup-agency.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyResetCodeDto } from './dto/verify-reset-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -31,6 +32,18 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.register(dto, res);
+  }
+
+  @Post('setup-agency')
+  @HttpCode(200)
+  @Auth()
+  @ApiOperation({ summary: 'Create agency and link it to the current admin user (onboarding)' })
+  setupAgency(
+    @Body() dto: SetupAgencyDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.setupAgency((req.user as any).userId, dto, res);
   }
 
   @Post('login')

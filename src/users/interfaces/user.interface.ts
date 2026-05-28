@@ -2,7 +2,7 @@ import { UserRole } from '../enums/user-role.enum';
 
 export interface IUser {
   id: string;
-  agencyId: string;
+  agencyId: string | null;
   name: string;
   email: string;
   password: string;

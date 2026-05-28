@@ -7,12 +7,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UsersModule } from '../users/users.module';
+import { AgenciesModule } from '../agencies/agencies.module';
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({}), // secrets provided per-call in service
     UsersModule,
+    AgenciesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RefreshTokenStrategy, JwtAuthGuard],
