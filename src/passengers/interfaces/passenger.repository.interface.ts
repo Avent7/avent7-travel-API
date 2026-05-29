@@ -9,6 +9,7 @@ export interface PassengerQuery {
   limit?: number;
   search?: string;
   clientId?: string;
+  segmentId?: string;
 }
 
 export interface IPassengerRepository {

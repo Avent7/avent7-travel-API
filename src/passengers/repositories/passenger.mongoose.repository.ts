@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types } from 'mongoose';
 import { Passenger, PassengerDocument } from '../schemas/passenger.schema';
+import { Client, ClientDocument } from '../../clients/schemas/client.schema';
 import { IPassengerRepository, PassengerQuery } from '../interfaces/passenger.repository.interface';
 import { IPassenger, IPassengerPage, IPassengerWithClient } from '../interfaces/passenger.interface';
 import { CreatePassengerDto } from '../dto/create-passenger.dto';
@@ -14,6 +15,7 @@ type MongoPax = Passenger & { _id: Types.ObjectId; createdAt: Date; updatedAt: D
 export class PassengerMongooseRepository implements IPassengerRepository {
   constructor(
     @InjectModel(Passenger.name) private readonly model: Model<PassengerDocument>,
+    @InjectModel(Client.name) private readonly clientModel: Model<ClientDocument>,
   ) {}
 
   private toIPax(doc: MongoPax): IPassenger {
@@ -51,13 +53,18 @@ export class PassengerMongooseRepository implements IPassengerRepository {
   }
 
   async findPaginated(agencyId: string, query: PassengerQuery): Promise<IPassengerPage> {
-    const { page = 1, limit = 20, search, clientId } = query;
+    const { page = 1, limit = 20, search, clientId, segmentId } = query;
     const filter: FilterQuery<PassengerDocument> = {
       agencyId: new Types.ObjectId(agencyId),
     };
 
     if (clientId && Types.ObjectId.isValid(clientId)) {
       filter.clientId = new Types.ObjectId(clientId);
+    } else if (segmentId && Types.ObjectId.isValid(segmentId)) {
+      const clientIds = await this.clientModel
+        .find({ agencyId: new Types.ObjectId(agencyId), segmentId: new Types.ObjectId(segmentId) })
+        .distinct('_id');
+      filter.clientId = { $in: clientIds };
     }
 
     if (search?.trim()) {

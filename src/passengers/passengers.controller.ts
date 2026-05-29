@@ -36,12 +36,14 @@ export class PassengersController {
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
   @ApiQuery({ name: 'search', required: false, description: 'Filter by full name or social name' })
   @ApiQuery({ name: 'clientId', required: false, description: 'Filter by client' })
+  @ApiQuery({ name: 'segmentId', required: false, description: 'Filter by segment' })
   @ApiOperation({ summary: 'List passengers with pagination and embedded client data' })
   find(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('clientId') clientId?: string,
+    @Query('segmentId') segmentId?: string,
   ) {
     const agencyId = this.requestContext.getAgencyId();
     return this.passengersService.findPaginated(agencyId!, {
@@ -49,6 +51,7 @@ export class PassengersController {
       limit: limit ? parseInt(limit, 10) : 20,
       search,
       clientId,
+      segmentId,
     });
   }
 
