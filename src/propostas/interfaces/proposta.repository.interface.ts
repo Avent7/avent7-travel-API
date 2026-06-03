@@ -22,4 +22,7 @@ export interface IPropostaRepository {
   updateBlock(propostaId: string, blockId: string, dto: UpdateBlockDto): Promise<IPropostaBlock | null>;
   reorderBlocks(propostaId: string, orderedIds: string[]): Promise<IPropostaBlock[]>;
   removeBlock(propostaId: string, blockId: string): Promise<boolean>;
+
+  /** Remove (cascade) a referência a um fornecedor de todos os blocos. Retorna nº de propostas afetadas. */
+  unsetSupplierFromBlocks(supplierId: string): Promise<number>;
 }

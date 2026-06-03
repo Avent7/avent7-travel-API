@@ -245,4 +245,16 @@ export class PropostaMongooseRepository implements IPropostaRepository {
     );
     return !!result;
   }
+
+  async unsetSupplierFromBlocks(supplierId: string): Promise<number> {
+    // Blocos são DocumentArray embutido; limpa supplierId em todos os blocos
+    // que referenciam o fornecedor, em qualquer proposta. supplierId é um
+    // ObjectId único globalmente, então não precisa de scoping por agência.
+    const result = await this.model.updateMany(
+      { 'blocks.blockData.supplierId': supplierId },
+      { $unset: { 'blocks.$[elem].blockData.supplierId': '' } },
+      { arrayFilters: [{ 'elem.blockData.supplierId': supplierId }] },
+    );
+    return result.modifiedCount ?? 0;
+  }
 }

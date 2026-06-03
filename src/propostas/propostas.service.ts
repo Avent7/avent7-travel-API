@@ -71,6 +71,11 @@ export class PropostasService {
     if (!deleted) throw new NotFoundException('Proposta não encontrada.');
   }
 
+  /** Cascade: limpa o vínculo a um fornecedor de todos os blocos das propostas. */
+  unsetSupplierFromBlocks(supplierId: string): Promise<number> {
+    return this.repo.unsetSupplierFromBlocks(supplierId);
+  }
+
   // ── Block operations (embedded) ───────────────────────────────────────────────
 
   async findBlocks(propostaId: string): Promise<IPropostaBlock[]> {

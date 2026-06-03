@@ -18,6 +18,7 @@ import { UsersModule } from './users/users.module';
 import { AgenciesModule } from './agencies/agencies.module';
 import { ClientsModule } from './clients/clients.module';
 import { ClientSegmentsModule } from './client-segments/client-segments.module';
+import { FornecedoresModule } from './fornecedores/fornecedores.module';
 import { PassengersModule } from './passengers/passengers.module';
 import { ViagensModule } from './viagens/viagens.module';
 import { PropostasModule } from './propostas/propostas.module';
@@ -89,6 +90,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     AgenciesModule,
     ClientsModule,
     ClientSegmentsModule,
+    FornecedoresModule,
     PassengersModule,
     ViagensModule,
     PropostasModule,
