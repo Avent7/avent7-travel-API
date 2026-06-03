@@ -52,11 +52,48 @@ export class ViagemMongooseRepository implements IViagemRepository {
     const { page = 1, pageSize = 10 } = query;
     const filter = this.buildFilter(agencyId, query);
     const skip = (page - 1) * pageSize;
+    const dir: 1 | -1 = query.sortOrder === 'asc' ? 1 : -1;
+
+    // Estágios extras + ordenação. Relações (clientName/createdByName) exigem lookup
+    // antes do $sort, pois os lookups de saída ocorrem depois do skip/limit.
+    const preSortStages: PipelineStage[] = [];
+    let sortStage: PipelineStage = { $sort: { createdAt: -1 } };
+
+    if (query.sortBy === 'clientName') {
+      preSortStages.push(
+        {
+          $lookup: {
+            from: 'clients',
+            let: { c: '$clientId' },
+            pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$c'] } } }, { $project: { fullName: 1 } }],
+            as: '_sortRef',
+          },
+        },
+        { $addFields: { _sortKey: { $toLower: { $ifNull: [{ $arrayElemAt: ['$_sortRef.fullName', 0] }, ''] } } } },
+      );
+      sortStage = { $sort: { _sortKey: dir, _id: 1 } };
+    } else if (query.sortBy === 'createdByName') {
+      preSortStages.push(
+        {
+          $lookup: {
+            from: 'users',
+            let: { u: '$createdByUserId' },
+            pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$u'] } } }, { $project: { name: 1 } }],
+            as: '_sortRef',
+          },
+        },
+        { $addFields: { _sortKey: { $toLower: { $ifNull: [{ $arrayElemAt: ['$_sortRef.name', 0] }, ''] } } } },
+      );
+      sortStage = { $sort: { _sortKey: dir, _id: 1 } };
+    } else if (query.sortBy && ['title', 'status', 'createdAt'].includes(query.sortBy)) {
+      sortStage = { $sort: { [query.sortBy]: dir } };
+    }
 
     const [result] = await this.model
       .aggregate([
         { $match: filter },
-        { $sort: { createdAt: -1 } },
+        ...preSortStages,
+        sortStage,
         {
           $facet: {
             data: [{ $skip: skip }, { $limit: pageSize }, ...(this.pipelineLookupStages() as any)],

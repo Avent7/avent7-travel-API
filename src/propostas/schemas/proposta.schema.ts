@@ -77,6 +77,12 @@ export class Proposta {
   @Prop({ default: false })
   clientIsTraveling: boolean;
 
+  @Prop({ default: 'USD' })
+  baseCurrency: string;
+
+  @Prop({ type: Object, default: {} })
+  fxRates: Record<string, number>;
+
   @Prop({ default: null })
   sentToClientAt: Date | null;
 

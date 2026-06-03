@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsMongoId, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsMongoId, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { PropostaStatus } from '../enums/proposta.enum';
 
 export class UpdatePropostaDto {
@@ -84,4 +84,14 @@ export class UpdatePropostaDto {
   @IsOptional()
   @IsBoolean()
   clientIsTraveling?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  baseCurrency?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  fxRates?: Record<string, number>;
 }

@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+
+export const BRIEFING_TEMPLATE_SORT_FIELDS = ['name', 'createdAt'] as const;
 
 export class BriefingTemplateQueryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -44,4 +46,14 @@ export class BriefingTemplateQueryDto {
   })
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ enum: BRIEFING_TEMPLATE_SORT_FIELDS })
+  @IsOptional()
+  @IsIn(BRIEFING_TEMPLATE_SORT_FIELDS as unknown as string[])
+  sortBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 }

@@ -22,7 +22,6 @@ import { PassengersModule } from './passengers/passengers.module';
 import { ViagensModule } from './viagens/viagens.module';
 import { PropostasModule } from './propostas/propostas.module';
 import { PropostaBlocksModule } from './proposta-blocks/proposta-blocks.module';
-import { BookingsModule } from './bookings/bookings.module';
 import { BriefingsModule } from './briefings/briefings.module';
 import { BriefingTemplatesModule } from './briefing-templates/briefing-templates.module';
 import { ImagesModule } from './images/images.module';
@@ -94,7 +93,6 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     ViagensModule,
     PropostasModule,
     PropostaBlocksModule,
-    BookingsModule,
     BriefingsModule,
     BriefingTemplatesModule,
     ImagesModule,

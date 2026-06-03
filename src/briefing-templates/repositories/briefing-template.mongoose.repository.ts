@@ -61,10 +61,14 @@ export class BriefingTemplateMongooseRepository implements IBriefingTemplateRepo
       filter.name = re;
     }
 
+    const dir = query.sortOrder === 'asc' ? 1 : -1;
+    const sortField = query.sortBy === 'name' ? 'name' : 'createdAt';
+    const sort: Record<string, 1 | -1> = { [sortField]: dir };
+
     const [docs, total] = await Promise.all([
       this.model
         .find(filter)
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip((page - 1) * pageSize)
         .limit(pageSize)
         .lean<MongoTpl[]>(),

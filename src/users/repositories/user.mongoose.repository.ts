@@ -32,7 +32,7 @@ export class UserMongooseRepository implements IUserRepository {
   }
 
   async findAll(agencyId: string, params: FindUsersParams): Promise<PaginatedUsers<IUser>> {
-    const { page, limit, role, status } = params;
+    const { page, limit, role, status, sortBy, sortOrder } = params;
     const skip = (page - 1) * limit;
 
     const baseFilter: Record<string, unknown> = {
@@ -44,6 +44,10 @@ export class UserMongooseRepository implements IUserRepository {
     if (role && role !== 'all') dataFilter.role = role;
     if (status === 'active') dataFilter.isActive = true;
     else if (status === 'inactive') dataFilter.isActive = false;
+
+    const allowedSort = ['name', 'role', 'isActive', 'email', 'createdAt'];
+    const sortField = sortBy && allowedSort.includes(sortBy) ? sortBy : 'createdAt';
+    const sort: Record<string, 1 | -1> = { [sortField]: sortOrder === 'asc' ? 1 : -1 };
 
     const [countResult, docs, total] = await Promise.all([
       this.userModel.aggregate([
@@ -58,7 +62,7 @@ export class UserMongooseRepository implements IUserRepository {
           },
         },
       ]),
-      this.userModel.find(dataFilter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean<MongoUser[]>(),
+      this.userModel.find(dataFilter).sort(sort).skip(skip).limit(limit).lean<MongoUser[]>(),
       this.userModel.countDocuments(dataFilter),
     ]);
 

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Proposta, PropostaDocument } from '../propostas/schemas/proposta.schema';
-import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
 import { Viagem, ViagemDocument } from '../viagens/schemas/viagem.schema';
 import { Briefing, BriefingDocument } from '../briefings/schemas/briefing.schema';
 import { PropostaStatus } from '../propostas/enums/proposta.enum';
@@ -80,7 +79,6 @@ export interface DashboardSummary {
 export class DashboardService {
   constructor(
     @InjectModel(Proposta.name) private readonly propostaModel: Model<PropostaDocument>,
-    @InjectModel(Booking.name) private readonly bookingModel: Model<BookingDocument>,
     @InjectModel(Viagem.name) private readonly viagemModel: Model<ViagemDocument>,
     @InjectModel(Briefing.name) private readonly briefingModel: Model<BriefingDocument>,
   ) {}

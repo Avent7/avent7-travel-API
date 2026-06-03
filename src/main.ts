@@ -48,7 +48,6 @@ async function bootstrap() {
     .addTag('passengers')
     .addTag('propostas')
     .addTag('proposta-blocks')
-    .addTag('bookings')
     .addTag('briefings')
     .build();
 

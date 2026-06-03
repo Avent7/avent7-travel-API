@@ -107,12 +107,46 @@ export class ClientMongooseRepository implements IClientRepository {
       ];
     }
 
+    const skip = (page - 1) * pageSize;
+    const dir: 1 | -1 = query.sortOrder === 'asc' ? 1 : -1;
+
+    // Ordenação por nome do segmento (relação): populate não ordena, então usamos
+    // aggregation com lookup em `clientsegments` e remontamos o segmento populado.
+    if (query.sortBy === 'segmentName') {
+      const [docs, total] = await Promise.all([
+        this.model.aggregate([
+          { $match: filter },
+          { $lookup: { from: 'clientsegments', localField: 'segmentId', foreignField: '_id', as: 'seg' } },
+          { $unwind: { path: '$seg', preserveNullAndEmptyArrays: true } },
+          { $sort: { 'seg.name': dir, _id: 1 } },
+          { $skip: skip },
+          { $limit: pageSize },
+          { $addFields: { segmentId: '$seg' } },
+          { $project: { seg: 0 } },
+        ]),
+        this.model.countDocuments(filter),
+      ]);
+
+      return {
+        data: (docs as unknown as MongoClient[]).map((d) => this.toIClient(d)),
+        total,
+        page,
+        pageSize,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      };
+    }
+
+    // Campos diretos (default: createdAt desc).
+    const directFields = ['fullName', 'emailPrimary', 'phonePrimary', 'isActive', 'tripCount', 'passengerCount', 'createdAt'];
+    const sortField = query.sortBy && directFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
+    const sort: Record<string, 1 | -1> = { [sortField]: dir };
+
     const [docs, total] = await Promise.all([
       this.model
         .find(filter)
         .populate('segmentId', 'name icon color')
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * pageSize)
+        .sort(sort)
+        .skip(skip)
         .limit(pageSize)
         .lean<MongoClient[]>(),
       this.model.countDocuments(filter),

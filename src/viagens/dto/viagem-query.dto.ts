@@ -1,7 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ViagemStatus } from '../enums/viagem.enum';
+
+export const VIAGEM_SORT_FIELDS = ['title', 'status', 'createdAt', 'clientName', 'createdByName'] as const;
 
 export class ViagemQueryDto {
   @ApiPropertyOptional()
@@ -33,4 +35,14 @@ export class ViagemQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({ enum: VIAGEM_SORT_FIELDS })
+  @IsOptional()
+  @IsIn(VIAGEM_SORT_FIELDS as unknown as string[])
+  sortBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 }

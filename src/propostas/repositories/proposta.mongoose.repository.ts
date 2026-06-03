@@ -89,6 +89,8 @@ export class PropostaMongooseRepository implements IPropostaRepository {
       clientMessage: doc.clientMessage ?? null,
       passengerIds: (doc.passengerIds ?? []).map((id) => id.toString()),
       clientIsTraveling: doc.clientIsTraveling ?? false,
+      baseCurrency: doc.baseCurrency ?? 'USD',
+      fxRates: doc.fxRates ?? {},
       sentToClientAt: doc.sentToClientAt ?? null,
       approvedAt: doc.approvedAt ?? null,
       bookedAt: doc.bookedAt ?? null,

@@ -22,6 +22,8 @@ export interface IProposta {
   clientMessage: string | null;
   passengerIds: string[];
   clientIsTraveling: boolean;
+  baseCurrency: string;
+  fxRates: Record<string, number>;
   sentToClientAt: Date | null;
   approvedAt: Date | null;
   bookedAt: Date | null;

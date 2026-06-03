@@ -69,6 +69,8 @@ export class UsersController {
     @Query('limit') limit = '10',
     @Query('role') role?: string,
     @Query('status') status?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
     const agencyId = this.requestContext.getAgencyId();
     return this.usersService.findAll(agencyId!, {
@@ -76,6 +78,8 @@ export class UsersController {
       limit: Math.min(100, Math.max(1, parseInt(limit, 10) || 10)),
       role,
       status,
+      sortBy,
+      sortOrder: sortOrder === 'asc' ? 'asc' : sortOrder === 'desc' ? 'desc' : undefined,
     });
   }
 

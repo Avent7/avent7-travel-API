@@ -1,6 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
+
+export const CLIENT_SORT_FIELDS = [
+  'fullName',
+  'emailPrimary',
+  'phonePrimary',
+  'isActive',
+  'tripCount',
+  'passengerCount',
+  'createdAt',
+  'segmentName',
+] as const;
 
 export class ClientQueryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -37,4 +48,14 @@ export class ClientQueryDto {
   })
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ enum: CLIENT_SORT_FIELDS })
+  @IsOptional()
+  @IsIn(CLIENT_SORT_FIELDS as unknown as string[])
+  sortBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 }

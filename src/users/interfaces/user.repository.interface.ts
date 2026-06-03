@@ -9,6 +9,8 @@ export interface FindUsersParams {
   limit: number;
   role?: string;
   status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface UserAggregateCounts {
