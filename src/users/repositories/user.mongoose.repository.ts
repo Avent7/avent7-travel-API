@@ -26,6 +26,7 @@ export class UserMongooseRepository implements IUserRepository {
       role: doc.role as UserRole,
       profileImageUrl: doc.profileImageUrl ?? null,
       isActive: doc.isActive,
+      tourCompleted: doc.tourCompleted ?? false,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
