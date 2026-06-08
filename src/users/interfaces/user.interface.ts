@@ -9,6 +9,7 @@ export interface IUser {
   role: UserRole;
   profileImageUrl: string | null;
   isActive: boolean;
+  tourCompleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

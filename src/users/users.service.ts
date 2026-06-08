@@ -121,6 +121,13 @@ export class UsersService {
     return result;
   }
 
+  async completeTour(id: string): Promise<void> {
+    const user = await this.userRepo.findById(id);
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+    if (user.tourCompleted) return;
+    await this.userRepo.update(id, { tourCompleted: true } as any);
+  }
+
   async updatePassword(id: string, hashedPassword: string): Promise<void> {
     const updated = await this.userRepo.update(id, { password: hashedPassword } as any);
     if (!updated) throw new NotFoundException('Usuário não encontrado.');

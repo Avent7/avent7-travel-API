@@ -50,6 +50,15 @@ export class UsersController {
     return this.usersService.changePassword(userId!, dto);
   }
 
+  @Post('me/complete-tour')
+  @Auth()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Mark the onboarding tour as completed for the current user' })
+  completeTour() {
+    const userId = this.requestContext.getUserId();
+    return this.usersService.completeTour(userId!);
+  }
+
   @Post('me/avatar')
   @Auth()
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))

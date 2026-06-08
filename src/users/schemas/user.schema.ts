@@ -27,6 +27,9 @@ export class User {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ default: false })
+  tourCompleted: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
