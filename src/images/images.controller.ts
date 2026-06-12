@@ -30,7 +30,7 @@ export class ImagesController {
 
   @Get('search')
   @Auth()
-  @ApiOperation({ summary: 'Search images via Unsplash (fallback: Pexels)' })
+  @ApiOperation({ summary: 'Search images via Google Places (fallbacks: Unsplash, Pexels)' })
   search(@Query() query: ImageSearchQueryDto) {
     return this.imagesService.searchImages(query.q, query.page, query.perPage);
   }

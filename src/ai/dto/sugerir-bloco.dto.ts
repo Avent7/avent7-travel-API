@@ -3,9 +3,9 @@ import { IsIn, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-vali
 import { Type } from 'class-transformer';
 
 export class SugerirBlocoDto {
-  @ApiProperty({ example: 'hospedagem', description: 'aereo | hospedagem | transporte | experiencia | restaurante' })
+  @ApiProperty({ example: 'experiencia', description: 'experiencia | restaurante — demais tipos não têm sugestão por IA' })
   @IsString()
-  @IsIn(['aereo', 'hospedagem', 'transporte', 'experiencia', 'restaurante'])
+  @IsIn(['experiencia', 'restaurante'])
   blockType: string;
 
   @ApiPropertyOptional({ example: 'Hotel boutique 5 estrelas perto do Coliseu, em Roma' })

@@ -94,4 +94,9 @@ export class UpdatePropostaDto {
   @IsOptional()
   @IsObject()
   fxRates?: Record<string, number>;
+
+  @ApiPropertyOptional({ description: 'Cidades visitadas por dia do roteiro (chave = nº do dia)', example: { '1': ['Roma'], '2': ['Florença', 'Pisa'] } })
+  @IsOptional()
+  @IsObject()
+  citiesByDay?: Record<string, string[]>;
 }

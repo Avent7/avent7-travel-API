@@ -83,6 +83,11 @@ export class Proposta {
   @Prop({ type: Object, default: {} })
   fxRates: Record<string, number>;
 
+  // Cidades visitadas por dia do roteiro (chave = nº do dia, base 1).
+  // Rastreia o caminho do cliente — alimentará o futuro mapa da viagem.
+  @Prop({ type: Object, default: {} })
+  citiesByDay: Record<string, string[]>;
+
   @Prop({ default: null })
   sentToClientAt: Date | null;
 

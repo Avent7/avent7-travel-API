@@ -92,6 +92,17 @@ export class ViagensService {
 
   async remove(id: string): Promise<void> {
     const viagem = await this.findById(id);
+
+    // Cascata: briefings e propostas da viagem não podem ficar órfãos.
+    const [briefings, propostas] = await Promise.all([
+      this.briefingsService.findByViagem(viagem.agencyId, id),
+      this.propostasService.findByViagem(viagem.agencyId, id),
+    ]);
+    await Promise.all([
+      ...briefings.map((b) => this.briefingsService.remove(b.id)),
+      ...propostas.map((p) => this.propostasService.remove(p.id)),
+    ]);
+
     const deleted = await this.repo.remove(id);
     if (!deleted) throw new NotFoundException('Viagem não encontrada.');
     await this.clientsService.incrementTripCount(viagem.clientId, -1);
